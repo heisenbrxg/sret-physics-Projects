@@ -1,0 +1,264 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Quantum Tunneling Comparison</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .main {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 24px;
+        }
+
+        canvas {
+            border: 1px solid black;
+            background-color: #f0f8ff;
+            margin-bottom: 10px;
+        }
+
+        button {
+            margin: 5px;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+
+        .legend {
+            min-width: 240px;
+            padding: 16px;
+            margin-left: 20px;
+            margin-top: 20px;
+            border: 1px solid black;
+            background-color: #f9f9f9;
+            height: fit-content;
+            font-size: 21px;
+        }
+
+        .legend div {
+            margin: 6px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main">
+        <h2>Quantum Tunneling: Wider vs Thinner Barrier</h2>
+        <div class="container">
+            <div class="panel">
+                <div class="label">Wider Barrier</div>
+                <canvas id="canvas1" width="500" height="400"></canvas>
+                <button onclick="start1()">Start</button>
+                <button onclick="stop1()">Stop</button>
+            </div>
+            <div class="panel">
+                <div class="label">Thinner Barrier</div>
+                <canvas id="canvas2" width="500" height="400"></canvas>
+                <button onclick="start2()">Start</button>
+                <button onclick="stop2()">Stop</button>
+            </div>
+            <div style="display: flex; flex-direction: column;">
+                <div class="legend">
+                    <strong>Wave Color Legend</strong>
+                    <div style="color: blue;">● Incident Wave</div>
+                    <div style="color: green;">● Reflected Wave</div>
+                    <div style="color: purple;">● Transmitted Wave</div>
+                    <div style="color: red;">● Barrier</div>
+                </div>
+                <div class="legend" id="percentBox1">
+                    <strong>Wider Barrier Percentages</strong>
+                    <div id="reflectPercent1">Reflection: --%</div>
+                    <div id="transmitPercent1">Transmission: --%</div>
+                </div>
+                <div class="legend" id="percentBox2">
+                    <strong>Thinner Barrier Percentages</strong>
+                    <div id="reflectPercent2">Reflection: --%</div>
+                    <div id="transmitPercent2">Transmission: --%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas1 = document.getElementById("canvas1");
+        const canvas2 = document.getElementById("canvas2");
+        const ctx1 = canvas1.getContext("2d");
+        const ctx2 = canvas2.getContext("2d");
+
+        const N = 200, dx = canvas1.width / N;
+        let t1 = 0, t2 = 0;
+        let animationId1 = null, animationId2 = null;
+
+        let splitTriggered1 = false, splitTriggered2 = false;
+        let impactCenter1 = 0, impactCenter2 = 0;
+        let splitTime1 = 0, splitTime2 = 0;
+
+        const barrierStart1 = 60, barrierEnd1 = 140;
+        const barrierStart2 = 80, barrierEnd2 = 120;
+        const barrierX1 = barrierStart1 * dx;
+        const barrierX2 = barrierStart2 * dx;
+
+        function drawBarrier(ctx, start, end) {
+            ctx.beginPath();
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 2;
+            for (let i = 0; i < N; i++) {
+                let x = i * dx;
+                let y = canvas1.height - (i >= start && i < end ? 300 : 0);
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        function drawBullet(ctx, x, color = "blue") {
+            const y = canvas1.height / 2;
+            ctx.beginPath();
+            ctx.fillStyle = "#555";
+            ctx.fillRect(x - 12, y - 8, 24, 12);
+            ctx.beginPath();
+            ctx.fillStyle = "#999";
+            ctx.moveTo(x + 12, y - 4);
+            ctx.lineTo(x + 20, y);
+            ctx.lineTo(x + 12, y + 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.fillStyle = "orange";
+            ctx.moveTo(x - 12, y - 3);
+            ctx.lineTo(x - 20, y);
+            ctx.lineTo(x - 12, y + 3);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawWave(ctx, color, direction, origin, scale, localT, splitTime) {
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            for (let i = 0; i < N; i++) {
+                let x = i * dx;
+                let pos = direction === "right"
+                    ? x - (origin + (localT - splitTime) * 5)
+                    : x - (origin - (localT - splitTime) * 5);
+                let psi = Math.exp(-0.01 * pos ** 2) * Math.cos(0.2 * x - localT);
+                let y = canvas1.height / 2 - psi * scale;
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        function updatePercentages(reflectScale, transmitScale, boxNumber) {
+            const total = reflectScale ** 2 + transmitScale ** 2;
+            const reflectPercent = ((reflectScale ** 2) / total * 100).toFixed(1);
+            const transmitPercent = ((transmitScale ** 2) / total * 100).toFixed(1);
+
+            document.getElementById(`reflectPercent${boxNumber}`).textContent = `Reflection: ${reflectPercent}%`;
+            document.getElementById(`transmitPercent${boxNumber}`).textContent = `Transmission: ${transmitPercent}%`;
+        }
+
+        function drawFrame1() {
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            drawBarrier(ctx1, barrierStart1, barrierEnd1);
+
+            let center = 30 + t1 * 5;
+            if (!splitTriggered1 && center >= barrierX1) {
+                splitTriggered1 = true;
+                splitTime1 = t1;
+                impactCenter1 = center;
+            }
+
+            if (!splitTriggered1) {
+                drawBullet(ctx1, center, "blue");
+            } else {
+                drawWave(ctx1, "green", "left", impactCenter1, 60, t1, splitTime1);
+                drawWave(ctx1, "purple", "right", impactCenter1, 30, t1, splitTime1);
+                updatePercentages(60, 30, 1);
+            }
+
+            t1 += 0.02;
+            animationId1 = requestAnimationFrame(drawFrame1);
+        }
+
+        function drawFrame2() {
+            ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+            drawBarrier(ctx2, barrierStart2, barrierEnd2);
+
+            let center = 30 + t2 * 5;
+            if (!splitTriggered2 && center >= barrierX2) {
+                splitTriggered2 = true;
+                splitTime2 = t2;
+                impactCenter2 = center;
+            }
+
+            if (!splitTriggered2) {
+                drawBullet(ctx2, center, "blue");
+            } else {
+                drawWave(ctx2, "green", "left", impactCenter2, 60, t2, splitTime2);
+                drawWave(ctx2, "purple", "right", impactCenter2, 80, t2, splitTime2);
+                updatePercentages(60, 80, 2);
+            }
+
+            t2 += 0.02;
+            animationId2 = requestAnimationFrame(drawFrame2);
+        }
+
+        function start1() {
+            if (!animationId1) drawFrame1();
+        }
+
+        function stop1() {
+            if (animationId1) {
+                cancelAnimationFrame(animationId1);
+                animationId1 = null;
+            }
+        }
+
+        function start2() {
+            if (!animationId2) drawFrame2();
+        }
+
+        function stop2() {
+            if (animationId2) {
+                cancelAnimationFrame(animationId2);
+                animationId2 = null;
+            }
+        }
+    </script>
+</body>
+
+</html>

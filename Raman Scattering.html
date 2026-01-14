@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raman Scattering Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #333;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #5a67d8;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .simulation-panel {
+            flex: 2;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-panel {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-height: fit-content;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(180deg, #f0f4ff 0%, #e6efff 100%);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .molecule-container {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .molecule-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .molecule-atom {
+            transition: all 0.2s ease;
+        }
+
+        .molecule-bond {
+            transition: all 0.2s ease;
+        }
+
+        .vibrating .molecule-atom:first-child {
+            animation: vibrateLeft 0.2s infinite;
+        }
+
+        .vibrating .molecule-atom:last-child {
+            animation: vibrateRight 0.2s infinite;
+        }
+
+        @keyframes vibrateLeft {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(-3px);
+            }
+        }
+
+        @keyframes vibrateRight {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(3px);
+            }
+        }
+
+        .photon {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .photon.incident {
+            background: radial-gradient(circle, #ffeb3b, #ffc107);
+            box-shadow: 0 0 20px #ffeb3b, 0 0 40px #ffeb3b;
+        }
+
+        .photon.stokes {
+            background: radial-gradient(circle, #4caf50, #2e7d32);
+            box-shadow: 0 0 20px #4caf50, 0 0 40px #4caf50;
+        }
+
+        .photon.anti-stokes {
+            background: radial-gradient(circle, #2196f3, #1565c0);
+            box-shadow: 0 0 20px #2196f3, 0 0 40px #2196f3;
+        }
+
+        .energy-levels {
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 180px;
+            height: 280px;
+        }
+
+        .energy-level {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: #333;
+            left: 0;
+            transition: all 0.3s ease;
+        }
+
+        .energy-level.ground {
+            bottom: 30px;
+        }
+
+        .energy-level.excited {
+            bottom: 130px;
+        }
+
+        .energy-level.virtual {
+            bottom: 230px;
+            opacity: 0.5;
+            border: 2px dashed #666;
+            height: 2px;
+            background: none;
+        }
+
+        .level-label {
+            position: absolute;
+            right: 110%;
+            top: -10px;
+            font-size: 13px;
+            color: #555;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .transition-arrow {
+            position: absolute;
+            width: 3px;
+            background: linear-gradient(to top, #ff5722, #ff9800);
+            left: 50%;
+            transform: translateX(-50%);
+            transform-origin: bottom;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .transition-arrow.active {
+            opacity: 1;
+            animation: arrowPulse 0.6s ease;
+        }
+
+        @keyframes arrowPulse {
+            0% {
+                transform: translateX(-50%) scaleY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) scaleY(1);
+            }
+
+            100% {
+                transform: translateX(-50%) scaleY(1);
+                opacity: 0.3;
+            }
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #5a67d8;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(90, 103, 216, 0.5);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #5a67d8;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .value-display {
+            display: inline-block;
+            margin-left: 10px;
+            color: #5a67d8;
+            font-weight: bold;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #5a67d8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .info-box h3 {
+            color: #5a67d8;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-box p {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #5a67d8;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #555;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-message {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .status-message.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .status-message.stokes {
+            border-left: 4px solid #4caf50;
+        }
+
+        .status-message.anti-stokes {
+            border-left: 4px solid #2196f3;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+
+            .canvas-container {
+                height: 400px;
+            }
+
+            .energy-levels {
+                right: 10px;
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>🔬 Raman Scattering Simulation</h1>
+        <p class="subtitle">Interactive visualization of quantum transitions in molecules</p>
+    </header>
+
+    <main>
+        <section class="simulation-panel">
+            <div class="canvas-container" id="canvasContainer">
+                <div class="molecule-container" id="moleculeContainer">
+                    <svg class="molecule-svg" viewBox="0 0 80 80">
+                        <circle class="molecule-atom" cx="25" cy="40" r="15" fill="#5a67d8" opacity="0.9" />
+                        <circle class="molecule-atom" cx="55" cy="40" r="15" fill="#764ba2" opacity="0.9" />
+                        <line class="molecule-bond" x1="25" y1="40" x2="55" y2="40" stroke="#333" stroke-width="4" />
+                    </svg>
+                </div>
+
+                <div class="energy-levels">
+                    <div class="energy-level virtual">
+                        <span class="level-label">Virtual State</span>
+                    </div>
+                    <div class="energy-level excited">
+                        <span class="level-label">v = 1</span>
+                    </div>
+                    <div class="energy-level ground">
+                        <span class="level-label">v = 0</span>
+                    </div>
+                    <div class="transition-arrow" id="arrow1"></div>
+                    <div class="transition-arrow" id="arrow2"></div>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: radial-gradient(circle, #ffeb3b, #ffc107);"></div>
+                    <span>Incident Photon</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: radial-gradient(circle, #4caf50, #2e7d32);"></div>
+                    <span>Stokes Scattering</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: radial-gradient(circle, #2196f3, #1565c0);"></div>
+                    <span>Anti-Stokes Scattering</span>
+                </div>
+            </div>
+        </section>
+
+        <aside class="control-panel">
+            <h2 style="color: #5a67d8; margin-bottom: 20px;">Controls</h2>
+
+            <button class="btn" id="startBtn" onclick="startRamanScattering()">
+                🚀 Start Raman Scattering
+            </button>
+
+            <button class="btn secondary" id="autoBtn" onclick="toggleAutoMode()">
+                ⚡ Auto Mode: <span id="autoStatus">OFF</span>
+            </button>
+
+            <div class="control-group">
+                <label>
+                    Laser Wavelength (nm)
+                    <span class="value-display" id="wavelengthValue">532</span>
+                </label>
+                <input type="range" class="slider" id="wavelengthSlider" min="400" max="700" value="532"
+                    oninput="updateWavelength(this.value)">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Temperature (K)
+                    <span class="value-display" id="tempValue">300</span>
+                </label>
+                <input type="range" class="slider" id="tempSlider" min="0" max="1000" value="300"
+                    oninput="updateTemperature(this.value)">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Animation Speed
+                    <span class="value-display" id="speedValue">1x</span>
+                </label>
+                <input type="range" class="slider" id="speedSlider" min="0.5" max="3" step="0.5" value="1"
+                    oninput="updateSpeed(this.value)">
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="stokesCount">0</div>
+                    <div class="stat-label">Stokes Events</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="antiStokesCount">0</div>
+                    <div class="stat-label">Anti-Stokes Events</div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3>📚 Raman Scattering</h3>
+                <p><strong>Stokes:</strong> Photon loses energy, molecule gains vibrational energy.</p>
+                <p><strong>Anti-Stokes:</strong> Photon gains energy, molecule loses vibrational energy.</p>
+                <p>Higher temperature increases anti-Stokes probability!</p>
+            </div>
+        </aside>
+    </main>
+
+    <div class="status-message" id="statusMessage"></div>
+
+    <script>
+        let autoMode = false;
+        let autoInterval;
+        let animationSpeed = 1;
+        let stokesEvents = 0;
+        let antiStokesEvents = 0;
+        let temperature = 300;
+        let isAnimating = false;
+        let currentWavelength = 532;
+
+        function wavelengthToColor(wavelength) {
+            let r, g, b;
+
+            if (wavelength >= 380 && wavelength < 440) {
+                r = -(wavelength - 440) / (440 - 380);
+                g = 0;
+                b = 1;
+            } else if (wavelength >= 440 && wavelength < 490) {
+                r = 0;
+                g = (wavelength - 440) / (490 - 440);
+                b = 1;
+            } else if (wavelength >= 490 && wavelength < 510) {
+                r = 0;
+                g = 1;
+                b = -(wavelength - 510) / (510 - 490);
+            } else if (wavelength >= 510 && wavelength < 580) {
+                r = (wavelength - 510) / (580 - 510);
+                g = 1;
+                b = 0;
+            } else if (wavelength >= 580 && wavelength < 645) {
+                r = 1;
+                g = -(wavelength - 645) / (645 - 580);
+                b = 0;
+            } else if (wavelength >= 645 && wavelength <= 780) {
+                r = 1;
+                g = 0;
+                b = 0;
+            } else {
+                r = 0;
+                g = 0;
+                b = 0;
+            }
+
+            r = Math.round(r * 255);
+            g = Math.round(g * 255);
+            b = Math.round(b * 255);
+
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function createPhoton(type) {
+            const photon = document.createElement('div');
+            photon.className = `photon ${type}`;
+
+            if (type === 'incident') {
+                const color = wavelengthToColor(currentWavelength);
+                photon.style.background = `radial-gradient(circle, ${color}, ${color}dd)`;
+                photon.style.boxShadow = `0 0 20px ${color}, 0 0 40px ${color}`;
+            }
+
+            document.getElementById('canvasContainer').appendChild(photon);
+            return photon;
+        }
+
+        function animatePhoton(photon, startX, startY, endX, endY, duration, callback) {
+            photon.style.left = startX + 'px';
+            photon.style.top = startY + 'px';
+            photon.style.opacity = '1';
+
+            // Create smooth animation
+            const startTime = performance.now();
+
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Easing function for smooth motion
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+                const currentX = startX + (endX - startX) * easeProgress;
+                const currentY = startY + (endY - startY) * easeProgress;
+
+                photon.style.left = currentX + 'px';
+                photon.style.top = currentY + 'px';
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    photon.style.opacity = '0';
+                    setTimeout(() => {
+                        if (photon.parentNode) {
+                            photon.remove();
+                        }
+                        if (callback) callback();
+                    }, 300);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function showTransition(arrowId, startY, endY, delay = 0) {
+            setTimeout(() => {
+                const arrow = document.getElementById(arrowId);
+                const height = Math.abs(endY - startY);
+                arrow.style.height = height + 'px';
+                arrow.style.bottom = startY + 'px';
+                arrow.classList.add('active');
+
+                setTimeout(() => {
+                    arrow.classList.remove('active');
+                }, 600 / animationSpeed);
+            }, delay);
+        }
+
+        function showStatusMessage(type, message) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message show ${type}`;
+
+            setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 2000);
+        }
+
+        function startRamanScattering() {
+            if (isAnimating) return;
+
+            isAnimating = true;
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = true;
+
+            const container = document.getElementById('canvasContainer');
+            const moleculeContainer = document.getElementById('moleculeContainer');
+            const containerRect = container.getBoundingClientRect();
+
+            // Calculate positions
+            const moleculeX = containerRect.width / 2 - 12.5;
+            const moleculeY = containerRect.height / 2 - 12.5;
+
+            // Vibrate molecule
+            moleculeContainer.classList.add('vibrating');
+
+            // Create and animate incident photon
+            const incidentPhoton = createPhoton('incident');
+            const incidentDuration = 800 / animationSpeed;
+
+            animatePhoton(incidentPhoton, -30, moleculeY, moleculeX, moleculeY, incidentDuration, () => {
+                // Show virtual state transition
+                showTransition('arrow1', 30, 230, 0);
+
+                // Determine scattering type based on temperature
+                const antiStokesProbability = Math.min(0.3 * (temperature / 1000), 0.3);
+                const isAntiStokes = Math.random() < antiStokesProbability;
+
+                setTimeout(() => {
+                    moleculeContainer.classList.remove('vibrating');
+
+                    if (isAntiStokes) {
+                        // Anti-Stokes scattering
+                        const antiStokesPhoton = createPhoton('anti-stokes');
+                        const exitY = moleculeY - 30;
+                        animatePhoton(antiStokesPhoton, moleculeX, moleculeY,
+                            containerRect.width - 30, exitY, 600 / animationSpeed);
+                        showTransition('arrow2', 130, 230, 100);
+                        antiStokesEvents++;
+                        document.getElementById('antiStokesCount').textContent = antiStokesEvents;
+                        showStatusMessage('anti-stokes', 'Anti-Stokes scattering detected!');
+                    } else {
+                        // Stokes scattering
+                        const stokesPhoton = createPhoton('stokes');
+                        const exitY = moleculeY + 30;
+                        animatePhoton(stokesPhoton, moleculeX, moleculeY,
+                            containerRect.width - 30, exitY, 600 / animationSpeed);
+                        showTransition('arrow2', 230, 130, 100);
+                        stokesEvents++;
+                        document.getElementById('stokesCount').textContent = stokesEvents;
+                        showStatusMessage('stokes', 'Stokes scattering detected!');
+                    }
+
+                    setTimeout(() => {
+                        isAnimating = false;
+                        startBtn.disabled = false;
+                    }, 1000 / animationSpeed);
+                }, 400 / animationSpeed);
+            });
+        }
+
+        function toggleAutoMode() {
+            autoMode = !autoMode;
+            document.getElementById('autoStatus').textContent = autoMode ? 'ON' : 'OFF';
+            const autoBtn = document.getElementById('autoBtn');
+
+            if (autoMode) {
+                autoBtn.style.background = 'linear-gradient(135deg, #4caf50, #2e7d32)';
+                autoInterval = setInterval(() => {
+                    if (!isAnimating) {
+                        startRamanScattering();
+                    }
+                }, 2500 / animationSpeed);
+            } else {
+                autoBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+                clearInterval(autoInterval);
+            }
+        }
+
+        function updateWavelength(value) {
+            currentWavelength = parseInt(value);
+            document.getElementById('wavelengthValue').textContent = value;
+        }
+
+        function updateTemperature(value) {
+            temperature = parseInt(value);
+            document.getElementById('tempValue').textContent = value;
+        }
+
+        function updateSpeed(value) {
+            animationSpeed = parseFloat(value);
+            document.getElementById('speedValue').textContent = value + 'x';
+
+            if (autoMode) {
+                clearInterval(autoInterval);
+                autoInterval = setInterval(() => {
+                    if (!isAnimating) {
+                        startRamanScattering();
+                    }
+                }, 2500 / animationSpeed);
+            }
+        }
+
+        // Initialize with a demo animation after page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                startRamanScattering();
+            }, 1000);
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+            }
+        });
+    </script>
+</body>
+
+</html>

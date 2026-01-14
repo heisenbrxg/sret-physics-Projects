@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photon Fluctuation & Damping Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(ellipse at center, #0a0520 0%, #000000 100%);
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 5, 30, 0.9);
+            padding: 22px;
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(138, 43, 226, 0.4);
+            z-index: 10;
+            box-shadow: 0 8px 32px rgba(138, 43, 226, 0.3);
+            max-width: 280px;
+        }
+
+        .controls h2 {
+            font-size: 19px;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        .control-group {
+            margin-bottom: 14px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 11px;
+            margin-bottom: 6px;
+            color: #9aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .value-display {
+            color: #0ff;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        button {
+            background: linear-gradient(135deg, #8a2be2 0%, #4b0082 100%);
+            border: none;
+            color: white;
+            padding: 11px 22px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 12px;
+            width: 100%;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(138, 43, 226, 0.6);
+        }
+
+        .info-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(10, 5, 30, 0.9);
+            padding: 22px;
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 0, 255, 0.4);
+            font-size: 12px;
+            max-width: 340px;
+            box-shadow: 0 8px 32px rgba(255, 0, 255, 0.3);
+        }
+
+        .info-panel h3 {
+            background: linear-gradient(135deg, #ff00ff, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 17px;
+            margin-bottom: 14px;
+            font-weight: bold;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+
+        .info-label {
+            color: #aaa;
+            font-size: 11px;
+        }
+
+        .info-value {
+            color: #0ff;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 5, 30, 0.9);
+            padding: 20px;
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            font-size: 12px;
+            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.3);
+        }
+
+        .legend h4 {
+            color: #0ff;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            margin-right: 10px;
+            border-radius: 50%;
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        .status-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(10, 5, 30, 0.9);
+            padding: 15px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 0, 0.4);
+            box-shadow: 0 8px 32px rgba(255, 255, 0, 0.3);
+        }
+
+        .status-text {
+            color: #ff0;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div class="controls">
+        <h2>🌌 Quantum Cavity Control</h2>
+        <div class="control-group">
+            <label>Damping Rate (γ): <span class="value-display" id="dampingVal">0.15</span></label>
+            <input type="range" id="damping" min="0" max="0.5" step="0.01" value="0.15">
+        </div>
+        <div class="control-group">
+            <label>Photon Injection: <span class="value-display" id="injectionVal">0.7</span></label>
+            <input type="range" id="injection" min="0" max="1" step="0.01" value="0.7">
+        </div>
+        <div class="control-group">
+            <label>Temperature (K): <span class="value-display" id="tempVal">300</span></label>
+            <input type="range" id="temperature" min="0" max="500" step="10" value="300">
+        </div>
+        <div class="control-group">
+            <label>Cavity Q-Factor: <span class="value-display" id="qFactorVal">1000</span></label>
+            <input type="range" id="qFactor" min="100" max="5000" step="100" value="1000">
+        </div>
+        <div class="control-group">
+            <label>Fluctuation Scale: <span class="value-display" id="fluctVal">1.0</span></label>
+            <input type="range" id="fluctuation" min="0" max="2" step="0.1" value="1.0">
+        </div>
+        <button id="resetBtn">Reset System</button>
+    </div>
+
+    <div class="legend">
+        <h4>System Components</h4>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #ff0080; color: #ff0080;"></div>
+            <span>Cavity Photons</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #00ffff; color: #00ffff;"></div>
+            <span>Thermal Fluctuations</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #ffff00; color: #ffff00;"></div>
+            <span>Vacuum Fluctuations</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #00ff00; color: #00ff00;"></div>
+            <span>Energy Decay</span>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <h3>⚡ System Metrics</h3>
+        <div class="info-row">
+            <span class="info-label">Photon Number ⟨n⟩:</span>
+            <span class="info-value" id="photonNum">0</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Energy Density:</span>
+            <span class="info-value" id="energyDensity">0.00</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Damping Time (τ):</span>
+            <span class="info-value" id="dampingTime">∞</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Variance (Δn²):</span>
+            <span class="info-value" id="variance">0.00</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Coherence Length:</span>
+            <span class="info-value" id="coherence">0 nm</span>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-text" id="status">Initializing Quantum Cavity...</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let photons = [];
+        let cavity, energyField;
+        let dampingWaves = [];
+        let fluctuationParticles = [];
+        let params = {
+            damping: 0.15,
+            injection: 0.7,
+            temperature: 300,
+            qFactor: 1000,
+            fluctuation: 1.0,
+            time: 0
+        };
+
+        class Photon {
+            constructor(x, y, z) {
+                const geometry = new THREE.SphereGeometry(0.15, 16, 16);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0xff0080,
+                    emissive: 0xff0080,
+                    emissiveIntensity: 0.8,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.position.set(x, y, z);
+
+                // Physics properties
+                this.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.1,
+                    (Math.random() - 0.5) * 0.1,
+                    (Math.random() - 0.5) * 0.1
+                );
+                this.energy = 1.0;
+                this.lifetime = 0;
+                this.maxLifetime = 500 / (params.damping + 0.01);
+
+                // Glow effect
+                const glowGeo = new THREE.SphereGeometry(0.25, 16, 16);
+                const glowMat = new THREE.MeshBasicMaterial({
+                    color: 0xff0080,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                this.glow = new THREE.Mesh(glowGeo, glowMat);
+                this.mesh.add(this.glow);
+
+                scene.add(this.mesh);
+            }
+
+            update() {
+                this.lifetime++;
+
+                // Apply damping
+                const dampingFactor = Math.exp(-params.damping * 0.01);
+                this.energy *= dampingFactor;
+
+                // Thermal fluctuations
+                const thermalNoise = (params.temperature / 300) * params.fluctuation * 0.01;
+                this.velocity.x += (Math.random() - 0.5) * thermalNoise;
+                this.velocity.y += (Math.random() - 0.5) * thermalNoise;
+                this.velocity.z += (Math.random() - 0.5) * thermalNoise;
+
+                // Move photon
+                this.mesh.position.add(this.velocity);
+
+                // Cavity boundary reflection
+                const boundaryRadius = 8;
+                const dist = this.mesh.position.length();
+                if (dist > boundaryRadius) {
+                    const normal = this.mesh.position.clone().normalize();
+                    this.velocity.reflect(normal);
+                    this.mesh.position.setLength(boundaryRadius);
+                }
+
+                // Update visual properties
+                this.mesh.material.emissiveIntensity = 0.4 + this.energy * 0.6;
+                this.mesh.material.opacity = 0.5 + this.energy * 0.4;
+                this.mesh.scale.setScalar(0.8 + this.energy * 0.4);
+
+                // Color shift based on energy
+                const hue = 0.9 - this.energy * 0.3;
+                this.mesh.material.color.setHSL(hue, 1, 0.5);
+                this.mesh.material.emissive.setHSL(hue, 1, 0.5);
+
+                return this.energy > 0.1 && this.lifetime < this.maxLifetime;
+            }
+
+            destroy() {
+                scene.remove(this.mesh);
+            }
+        }
+
+        class DampingWave {
+            constructor() {
+                const geometry = new THREE.TorusGeometry(5, 0.1, 16, 100);
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0x00ff00,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.rotation.x = Math.random() * Math.PI;
+                this.mesh.rotation.y = Math.random() * Math.PI;
+                this.scale = 0;
+                scene.add(this.mesh);
+            }
+
+            update() {
+                this.scale += 0.02;
+                this.mesh.scale.setScalar(this.scale);
+                this.mesh.material.opacity = Math.max(0, 0.5 - this.scale * 0.1);
+                return this.scale < 5;
+            }
+
+            destroy() {
+                scene.remove(this.mesh);
+            }
+        }
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.02);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 20);
+
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.getElementById('canvas'),
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+            scene.add(ambientLight);
+
+            const pointLight1 = new THREE.PointLight(0xff0080, 3, 30);
+            pointLight1.position.set(10, 10, 10);
+            scene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0x00ffff, 2, 30);
+            pointLight2.position.set(-10, -10, 10);
+            scene.add(pointLight2);
+
+            createCavity();
+            createEnergyField();
+            createFluctuationParticles();
+            setupControls();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createCavity() {
+            // Outer cavity shell
+            const geometry = new THREE.SphereGeometry(8, 64, 64);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x4400ff,
+                transparent: true,
+                opacity: 0.15,
+                side: THREE.DoubleSide,
+                wireframe: true
+            });
+            cavity = new THREE.Mesh(geometry, material);
+            scene.add(cavity);
+
+            // Inner glow sphere
+            const glowGeo = new THREE.SphereGeometry(7.8, 32, 32);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: 0x8800ff,
+                transparent: true,
+                opacity: 0.05,
+                side: THREE.BackSide
+            });
+            const innerGlow = new THREE.Mesh(glowGeo, glowMat);
+            cavity.add(innerGlow);
+        }
+
+        function createEnergyField() {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const colors = [];
+
+            for (let i = 0; i < 2000; i++) {
+                const radius = 7 + Math.random() * 2;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+
+                vertices.push(
+                    radius * Math.sin(phi) * Math.cos(theta),
+                    radius * Math.sin(phi) * Math.sin(theta),
+                    radius * Math.cos(phi)
+                );
+
+                const color = new THREE.Color();
+                color.setHSL(0.6 + Math.random() * 0.2, 1, 0.5);
+                colors.push(color.r, color.g, color.b);
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.08,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+
+            energyField = new THREE.Points(geometry, material);
+            scene.add(energyField);
+        }
+
+        function createFluctuationParticles() {
+            for (let i = 0; i < 100; i++) {
+                const geometry = new THREE.SphereGeometry(0.08, 8, 8);
+                const color = Math.random() > 0.5 ? 0x00ffff : 0xffff00;
+                const material = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const particle = new THREE.Mesh(geometry, material);
+
+                const radius = Math.random() * 7;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+
+                particle.position.set(
+                    radius * Math.sin(phi) * Math.cos(theta),
+                    radius * Math.sin(phi) * Math.sin(theta),
+                    radius * Math.cos(phi)
+                );
+
+                particle.userData = {
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.05,
+                        (Math.random() - 0.5) * 0.05,
+                        (Math.random() - 0.5) * 0.05
+                    ),
+                    phase: Math.random() * Math.PI * 2
+                };
+
+                fluctuationParticles.push(particle);
+                scene.add(particle);
+            }
+        }
+
+        function updateFluctuations() {
+            fluctuationParticles.forEach(particle => {
+                particle.userData.phase += 0.05 * params.fluctuation;
+                particle.position.add(particle.userData.velocity);
+
+                // Thermal agitation
+                const thermalScale = params.temperature / 300;
+                particle.position.x += Math.sin(particle.userData.phase) * 0.02 * thermalScale;
+                particle.position.y += Math.cos(particle.userData.phase * 1.3) * 0.02 * thermalScale;
+                particle.position.z += Math.sin(particle.userData.phase * 0.7) * 0.02 * thermalScale;
+
+                // Boundary
+                if (particle.position.length() > 7) {
+                    particle.position.setLength(7);
+                    particle.userData.velocity.multiplyScalar(-1);
+                }
+
+                particle.material.opacity = 0.3 + Math.sin(particle.userData.phase) * 0.4;
+            });
+        }
+
+        function injectPhotons() {
+            const injectionRate = params.injection * 0.1;
+            if (Math.random() < injectionRate && photons.length < 200) {
+                const angle = Math.random() * Math.PI * 2;
+                const height = (Math.random() - 0.5) * 4;
+                photons.push(new Photon(
+                    Math.cos(angle) * 2,
+                    height,
+                    Math.sin(angle) * 2
+                ));
+            }
+        }
+
+        function emitDampingWave() {
+            if (Math.random() < params.damping * 0.5 && dampingWaves.length < 10) {
+                dampingWaves.push(new DampingWave());
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            params.time += 0.016;
+
+            // Rotate cavity
+            cavity.rotation.y += 0.002;
+            cavity.rotation.x += 0.001;
+            energyField.rotation.y -= 0.003;
+
+            // Camera orbit
+            camera.position.x = Math.sin(params.time * 0.1) * 20;
+            camera.position.z = Math.cos(params.time * 0.1) * 20;
+            camera.lookAt(0, 0, 0);
+
+            // Inject photons
+            injectPhotons();
+
+            // Update photons
+            photons = photons.filter(photon => {
+                const alive = photon.update();
+                if (!alive) photon.destroy();
+                return alive;
+            });
+
+            // Emit damping waves
+            emitDampingWave();
+
+            // Update damping waves
+            dampingWaves = dampingWaves.filter(wave => {
+                const alive = wave.update();
+                if (!alive) wave.destroy();
+                return alive;
+            });
+
+            // Update fluctuations
+            updateFluctuations();
+
+            // Calculate metrics
+            const avgEnergy = photons.reduce((sum, p) => sum + p.energy, 0) / Math.max(photons.length, 1);
+            const variance = photons.reduce((sum, p) => sum + Math.pow(p.energy - avgEnergy, 2), 0) / Math.max(photons.length, 1);
+            const dampingTime = params.damping > 0 ? (1 / params.damping).toFixed(2) : '∞';
+            const coherenceLength = Math.floor(params.qFactor * 500 / (params.damping * 1000 + 1));
+
+            // Update UI
+            document.getElementById('photonNum').textContent = photons.length;
+            document.getElementById('energyDensity').textContent = avgEnergy.toFixed(3);
+            document.getElementById('dampingTime').textContent = dampingTime + ' s';
+            document.getElementById('variance').textContent = variance.toFixed(3);
+            document.getElementById('coherence').textContent = coherenceLength + ' nm';
+
+            // Status
+            let status = 'Steady State';
+            if (photons.length < 10) status = 'Low Photon Regime';
+            else if (photons.length > 150) status = 'High Field Intensity';
+            else if (params.damping > 0.3) status = 'Rapid Damping Mode';
+            document.getElementById('status').textContent = status;
+
+            renderer.render(scene, camera);
+        }
+
+        function setupControls() {
+            document.getElementById('damping').addEventListener('input', (e) => {
+                params.damping = parseFloat(e.target.value);
+                document.getElementById('dampingVal').textContent = params.damping.toFixed(2);
+            });
+
+            document.getElementById('injection').addEventListener('input', (e) => {
+                params.injection = parseFloat(e.target.value);
+                document.getElementById('injectionVal').textContent = params.injection.toFixed(2);
+            });
+
+            document.getElementById('temperature').addEventListener('input', (e) => {
+                params.temperature = parseInt(e.target.value);
+                document.getElementById('tempVal').textContent = params.temperature;
+            });
+
+            document.getElementById('qFactor').addEventListener('input', (e) => {
+                params.qFactor = parseInt(e.target.value);
+                document.getElementById('qFactorVal').textContent = params.qFactor;
+            });
+
+            document.getElementById('fluctuation').addEventListener('input', (e) => {
+                params.fluctuation = parseFloat(e.target.value);
+                document.getElementById('fluctVal').textContent = params.fluctuation.toFixed(1);
+            });
+
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                photons.forEach(p => p.destroy());
+                photons = [];
+                dampingWaves.forEach(w => w.destroy());
+                dampingWaves = [];
+                camera.position.set(0, 5, 20);
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+        animate();
+    </script>
+</body>
+
+</html>

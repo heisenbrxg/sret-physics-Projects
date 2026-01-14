@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydrogen Atom - Schrödinger Equation Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            color: #a0a0ff;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group h3 {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #00d4ff;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .parameter {
+            margin-bottom: 15px;
+        }
+
+        .parameter label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #c0c0ff;
+        }
+
+        .parameter input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .parameter input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .parameter input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            cursor: pointer;
+            border: none;
+        }
+
+        .value-display {
+            display: inline-block;
+            background: rgba(0, 212, 255, 0.2);
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            color: #00d4ff;
+            float: right;
+        }
+
+        .quantum-numbers {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .quantum-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .quantum-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+        }
+
+        .quantum-btn.active {
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        .visualization-area {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        canvas {
+            width: 100%;
+            height: 600px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .info-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid #00d4ff;
+        }
+
+        .info-panel h4 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 0.85em;
+            color: #a0a0ff;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>⚛️ Hydrogen Atom Simulator</h1>
+            <p class="subtitle">Schrödinger Equation - Quantum Orbital Visualization</p>
+        </header>
+
+        <div class="main-content">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Quantum Numbers</h3>
+                    <div class="parameter">
+                        <label>Principal Quantum Number (n) <span class="value-display" id="n-value">1</span></label>
+                        <div class="quantum-numbers">
+                            <button class="quantum-btn active" onclick="setN(1)">n=1</button>
+                            <button class="quantum-btn" onclick="setN(2)">n=2</button>
+                            <button class="quantum-btn" onclick="setN(3)">n=3</button>
+                            <button class="quantum-btn" onclick="setN(4)">n=4</button>
+                            <button class="quantum-btn" onclick="setN(5)">n=5</button>
+                            <button class="quantum-btn" onclick="setN(6)">n=6</button>
+                        </div>
+                    </div>
+
+                    <div class="parameter">
+                        <label>Angular Momentum (l) <span class="value-display" id="l-value">0</span></label>
+                        <div class="quantum-numbers" id="l-buttons">
+                            <button class="quantum-btn active" onclick="setL(0)">l=0 (s)</button>
+                        </div>
+                    </div>
+
+                    <div class="parameter">
+                        <label>Magnetic Quantum Number (m) <span class="value-display" id="m-value">0</span></label>
+                        <div class="quantum-numbers" id="m-buttons">
+                            <button class="quantum-btn active" onclick="setM(0)">m=0</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Visualization Parameters</h3>
+                    <div class="parameter">
+                        <label>Orbital Detail <span class="value-display" id="detail-value">50</span></label>
+                        <input type="range" id="detail" min="20" max="100" value="50"
+                            oninput="updateDetail(this.value)">
+                    </div>
+
+                    <div class="parameter">
+                        <label>Probability Threshold <span class="value-display"
+                                id="threshold-value">0.01</span></label>
+                        <input type="range" id="threshold" min="1" max="100" value="10"
+                            oninput="updateThreshold(this.value)">
+                    </div>
+
+                    <div class="parameter">
+                        <label>Rotation Speed <span class="value-display" id="rotation-value">1.0</span></label>
+                        <input type="range" id="rotation" min="0" max="50" value="10"
+                            oninput="updateRotation(this.value)">
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="resetView()">Reset View</button>
+                <button class="btn-primary" onclick="toggleAnimation()">Pause/Resume</button>
+            </div>
+
+            <div class="visualization-area">
+                <canvas id="canvas"></canvas>
+
+                <div class="info-panel">
+                    <h4>Orbital Information</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Orbital Name</div>
+                            <div class="info-value" id="orbital-name">1s</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Energy Level (eV)</div>
+                            <div class="info-value" id="energy">-13.6</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Degeneracy</div>
+                            <div class="info-value" id="degeneracy">1</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Nodes (Radial)</div>
+                            <div class="info-value" id="nodes">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let n = 1, l = 0, m = 0;
+        let detail = 50;
+        let threshold = 0.01;
+        let rotationSpeed = 0.01;
+        let angle = 0;
+        let isAnimating = true;
+
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        function factorial(num) {
+            if (num <= 1) return 1;
+            return num * factorial(num - 1);
+        }
+
+        function associatedLaguerre(n, l, x) {
+            if (n === 0) return 1;
+            if (n === 1) return -x + l + 1;
+
+            let L0 = 1;
+            let L1 = -x + l + 1;
+            let Ln = 0;
+
+            for (let i = 2; i <= n; i++) {
+                Ln = ((2 * i - 1 + l - x) * L1 - (i - 1 + l) * L0) / i;
+                L0 = L1;
+                L1 = Ln;
+            }
+            return Ln;
+        }
+
+        function associatedLegendre(l, m, x) {
+            const absM = Math.abs(m);
+            let pmm = 1.0;
+
+            if (absM > 0) {
+                const somx2 = Math.sqrt((1 - x) * (1 + x));
+                let fact = 1.0;
+                for (let i = 1; i <= absM; i++) {
+                    pmm *= -fact * somx2;
+                    fact += 2.0;
+                }
+            }
+
+            if (l === absM) return pmm;
+
+            let pmmp1 = x * (2 * absM + 1) * pmm;
+            if (l === absM + 1) return pmmp1;
+
+            let pll = 0;
+            for (let ll = absM + 2; ll <= l; ll++) {
+                pll = (x * (2 * ll - 1) * pmmp1 - (ll + absM - 1) * pmm) / (ll - absM);
+                pmm = pmmp1;
+                pmmp1 = pll;
+            }
+            return pll;
+        }
+
+        function radialWaveFunction(n, l, r) {
+            const a0 = 1; // Bohr radius (normalized)
+            const rho = 2 * r / (n * a0);
+
+            const normConst = Math.sqrt(
+                Math.pow(2 / (n * a0), 3) *
+                factorial(n - l - 1) /
+                (2 * n * factorial(n + l))
+            );
+
+            const exponential = Math.exp(-rho / 2);
+            const polynomial = Math.pow(rho, l);
+            const laguerre = associatedLaguerre(n - l - 1, 2 * l + 1, rho);
+
+            return normConst * exponential * polynomial * laguerre;
+        }
+
+        function sphericalHarmonic(l, m, theta, phi) {
+            const absM = Math.abs(m);
+
+            const normConst = Math.sqrt(
+                ((2 * l + 1) * factorial(l - absM)) /
+                (4 * Math.PI * factorial(l + absM))
+            );
+
+            const legendre = associatedLegendre(l, absM, Math.cos(theta));
+            const exponential = m >= 0 ?
+                Math.cos(m * phi) :
+                Math.sin(absM * phi);
+
+            return normConst * legendre * exponential;
+        }
+
+        function waveFunction(n, l, m, r, theta, phi) {
+            const R = radialWaveFunction(n, l, r);
+            const Y = sphericalHarmonic(l, m, theta, phi);
+            return R * Y;
+        }
+
+        function drawOrbital() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const scale = Math.min(canvas.width, canvas.height) / (8 * n);
+
+            const points = [];
+            const maxR = 4 * n;
+
+            for (let i = 0; i < detail; i++) {
+                for (let j = 0; j < detail; j++) {
+                    const r = (i / detail) * maxR;
+                    const theta = (j / detail) * Math.PI;
+
+                    for (let k = 0; k < detail / 2; k++) {
+                        const phi = (k / (detail / 2)) * 2 * Math.PI + angle;
+
+                        const psi = waveFunction(n, l, m, r, theta, phi);
+                        const prob = psi * psi;
+
+                        if (prob > threshold && Math.random() < prob * 100) {
+                            const x = r * Math.sin(theta) * Math.cos(phi);
+                            const y = r * Math.sin(theta) * Math.sin(phi);
+                            const z = r * Math.cos(theta);
+
+                            const rotX = x * Math.cos(angle) - z * Math.sin(angle);
+                            const rotZ = x * Math.sin(angle) + z * Math.cos(angle);
+
+                            const screenX = centerX + rotX * scale;
+                            const screenY = centerY + y * scale;
+                            const brightness = (rotZ + maxR) / (2 * maxR);
+
+                            points.push({ x: screenX, y: screenY, prob, brightness });
+                        }
+                    }
+                }
+            }
+
+            points.sort((a, b) => a.brightness - b.brightness);
+
+            points.forEach(point => {
+                const hue = 200 + point.brightness * 100;
+                const alpha = Math.min(point.prob * 20, 0.8);
+                ctx.fillStyle = `hsla(${hue}, 100%, 60%, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Draw nucleus
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function animate() {
+            if (isAnimating) {
+                drawOrbital();
+                angle += rotationSpeed;
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function setN(value) {
+            n = value;
+            document.getElementById('n-value').textContent = value;
+            document.querySelectorAll('.control-group .quantum-numbers button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update available l values
+            const lButtons = document.getElementById('l-buttons');
+            lButtons.innerHTML = '';
+            const orbitalLabels = ['s', 'p', 'd', 'f', 'g', 'h'];
+            for (let i = 0; i < n; i++) {
+                const label = i < orbitalLabels.length ? orbitalLabels[i] : i;
+                const btn = document.createElement('button');
+                btn.className = 'quantum-btn' + (i === 0 ? ' active' : '');
+                btn.textContent = `l=${i} (${label})`;
+                btn.onclick = () => setL(i);
+                lButtons.appendChild(btn);
+            }
+            setL(0);
+            updateInfo();
+        }
+
+        function setL(value) {
+            l = value;
+            document.getElementById('l-value').textContent = value;
+            document.querySelectorAll('#l-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update available m values
+            const mButtons = document.getElementById('m-buttons');
+            mButtons.innerHTML = '';
+            for (let i = -l; i <= l; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'quantum-btn' + (i === 0 ? ' active' : '');
+                btn.textContent = `m=${i}`;
+                btn.onclick = () => setM(i);
+                mButtons.appendChild(btn);
+            }
+            setM(0);
+            updateInfo();
+        }
+
+        function setM(value) {
+            m = value;
+            document.getElementById('m-value').textContent = value;
+            document.querySelectorAll('#m-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            updateInfo();
+        }
+
+        function updateDetail(value) {
+            detail = parseInt(value);
+            document.getElementById('detail-value').textContent = value;
+        }
+
+        function updateThreshold(value) {
+            threshold = value / 1000;
+            document.getElementById('threshold-value').textContent = threshold.toFixed(3);
+        }
+
+        function updateRotation(value) {
+            rotationSpeed = value / 1000;
+            document.getElementById('rotation-value').textContent = rotationSpeed.toFixed(3);
+        }
+
+        function updateInfo() {
+            const orbitalLabels = ['s', 'p', 'd', 'f', 'g', 'h'];
+            const orbital = n + (l < orbitalLabels.length ? orbitalLabels[l] : l);
+            document.getElementById('orbital-name').textContent = orbital;
+
+            const energy = -13.6 / (n * n);
+            document.getElementById('energy').textContent = energy.toFixed(3);
+
+            const deg = 2 * l + 1;
+            document.getElementById('degeneracy').textContent = deg;
+
+            const nodes = n - l - 1;
+            document.getElementById('nodes').textContent = nodes;
+        }
+
+        function resetView() {
+            angle = 0;
+        }
+
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        });
+
+        updateInfo();
+        animate();
+    </script>
+</body>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydrogen Atom - Schrödinger Equation Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            color: #a0a0ff;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group h3 {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #00d4ff;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .parameter {
+            margin-bottom: 15px;
+        }
+
+        .parameter label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #c0c0ff;
+        }
+
+        .parameter input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .parameter input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .parameter input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            cursor: pointer;
+            border: none;
+        }
+
+        .value-display {
+            display: inline-block;
+            background: rgba(0, 212, 255, 0.2);
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            color: #00d4ff;
+            float: right;
+        }
+
+        .quantum-numbers {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .quantum-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .quantum-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+        }
+
+        .quantum-btn.active {
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        .visualization-area {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        canvas {
+            width: 100%;
+            height: 600px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .info-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid #00d4ff;
+        }
+
+        .info-panel h4 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 0.85em;
+            color: #a0a0ff;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>⚛️ Hydrogen Atom Simulator</h1>
+            <p class="subtitle">Schrödinger Equation - Quantum Orbital Visualization</p>
+        </header>
+
+        <div class="main-content">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Quantum Numbers</h3>
+                    <div class="parameter">
+                        <label>Principal Quantum Number (n) <span class="value-display" id="n-value">1</span></label>
+                        <div class="quantum-numbers">
+                            <button class="quantum-btn active" onclick="setN(1)">n=1</button>
+                            <button class="quantum-btn" onclick="setN(2)">n=2</button>
+                            <button class="quantum-btn" onclick="setN(3)">n=3</button>
+                            <button class="quantum-btn" onclick="setN(4)">n=4</button>
+                            <button class="quantum-btn" onclick="setN(5)">n=5</button>
+                            <button class="quantum-btn" onclick="setN(6)">n=6</button>
+                        </div>
+                    </div>
+
+                    <div class="parameter">
+                        <label>Angular Momentum (l) <span class="value-display" id="l-value">0</span></label>
+                        <div class="quantum-numbers" id="l-buttons">
+                            <button class="quantum-btn active" onclick="setL(0)">l=0 (s)</button>
+                        </div>
+                    </div>
+
+                    <div class="parameter">
+                        <label>Magnetic Quantum Number (m) <span class="value-display" id="m-value">0</span></label>
+                        <div class="quantum-numbers" id="m-buttons">
+                            <button class="quantum-btn active" onclick="setM(0)">m=0</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Visualization Parameters</h3>
+                    <div class="parameter">
+                        <label>Orbital Detail <span class="value-display" id="detail-value">50</span></label>
+                        <input type="range" id="detail" min="20" max="100" value="50"
+                            oninput="updateDetail(this.value)">
+                    </div>
+
+                    <div class="parameter">
+                        <label>Probability Threshold <span class="value-display"
+                                id="threshold-value">0.01</span></label>
+                        <input type="range" id="threshold" min="1" max="100" value="10"
+                            oninput="updateThreshold(this.value)">
+                    </div>
+
+                    <div class="parameter">
+                        <label>Rotation Speed <span class="value-display" id="rotation-value">1.0</span></label>
+                        <input type="range" id="rotation" min="0" max="50" value="10"
+                            oninput="updateRotation(this.value)">
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="resetView()">Reset View</button>
+                <button class="btn-primary" onclick="toggleAnimation()">Pause/Resume</button>
+            </div>
+
+            <div class="visualization-area">
+                <canvas id="canvas"></canvas>
+
+                <div class="info-panel">
+                    <h4>Orbital Information</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Orbital Name</div>
+                            <div class="info-value" id="orbital-name">1s</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Energy Level (eV)</div>
+                            <div class="info-value" id="energy">-13.6</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Degeneracy</div>
+                            <div class="info-value" id="degeneracy">1</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Nodes (Radial)</div>
+                            <div class="info-value" id="nodes">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let n = 1, l = 0, m = 0;
+        let detail = 50;
+        let threshold = 0.01;
+        let rotationSpeed = 0.01;
+        let angle = 0;
+        let isAnimating = true;
+
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        function factorial(num) {
+            if (num <= 1) return 1;
+            return num * factorial(num - 1);
+        }
+
+        function associatedLaguerre(n, l, x) {
+            if (n === 0) return 1;
+            if (n === 1) return -x + l + 1;
+
+            let L0 = 1;
+            let L1 = -x + l + 1;
+            let Ln = 0;
+
+            for (let i = 2; i <= n; i++) {
+                Ln = ((2 * i - 1 + l - x) * L1 - (i - 1 + l) * L0) / i;
+                L0 = L1;
+                L1 = Ln;
+            }
+            return Ln;
+        }
+
+        function associatedLegendre(l, m, x) {
+            const absM = Math.abs(m);
+            let pmm = 1.0;
+
+            if (absM > 0) {
+                const somx2 = Math.sqrt((1 - x) * (1 + x));
+                let fact = 1.0;
+                for (let i = 1; i <= absM; i++) {
+                    pmm *= -fact * somx2;
+                    fact += 2.0;
+                }
+            }
+
+            if (l === absM) return pmm;
+
+            let pmmp1 = x * (2 * absM + 1) * pmm;
+            if (l === absM + 1) return pmmp1;
+
+            let pll = 0;
+            for (let ll = absM + 2; ll <= l; ll++) {
+                pll = (x * (2 * ll - 1) * pmmp1 - (ll + absM - 1) * pmm) / (ll - absM);
+                pmm = pmmp1;
+                pmmp1 = pll;
+            }
+            return pll;
+        }
+
+        function radialWaveFunction(n, l, r) {
+            const a0 = 1; // Bohr radius (normalized)
+            const rho = 2 * r / (n * a0);
+
+            const normConst = Math.sqrt(
+                Math.pow(2 / (n * a0), 3) *
+                factorial(n - l - 1) /
+                (2 * n * factorial(n + l))
+            );
+
+            const exponential = Math.exp(-rho / 2);
+            const polynomial = Math.pow(rho, l);
+            const laguerre = associatedLaguerre(n - l - 1, 2 * l + 1, rho);
+
+            return normConst * exponential * polynomial * laguerre;
+        }
+
+        function sphericalHarmonic(l, m, theta, phi) {
+            const absM = Math.abs(m);
+
+            const normConst = Math.sqrt(
+                ((2 * l + 1) * factorial(l - absM)) /
+                (4 * Math.PI * factorial(l + absM))
+            );
+
+            const legendre = associatedLegendre(l, absM, Math.cos(theta));
+            const exponential = m >= 0 ?
+                Math.cos(m * phi) :
+                Math.sin(absM * phi);
+
+            return normConst * legendre * exponential;
+        }
+
+        function waveFunction(n, l, m, r, theta, phi) {
+            const R = radialWaveFunction(n, l, r);
+            const Y = sphericalHarmonic(l, m, theta, phi);
+            return R * Y;
+        }
+
+        function drawOrbital() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const scale = Math.min(canvas.width, canvas.height) / (8 * n);
+
+            const points = [];
+            const maxR = 4 * n;
+
+            for (let i = 0; i < detail; i++) {
+                for (let j = 0; j < detail; j++) {
+                    const r = (i / detail) * maxR;
+                    const theta = (j / detail) * Math.PI;
+
+                    for (let k = 0; k < detail / 2; k++) {
+                        const phi = (k / (detail / 2)) * 2 * Math.PI + angle;
+
+                        const psi = waveFunction(n, l, m, r, theta, phi);
+                        const prob = psi * psi;
+
+                        if (prob > threshold && Math.random() < prob * 100) {
+                            const x = r * Math.sin(theta) * Math.cos(phi);
+                            const y = r * Math.sin(theta) * Math.sin(phi);
+                            const z = r * Math.cos(theta);
+
+                            const rotX = x * Math.cos(angle) - z * Math.sin(angle);
+                            const rotZ = x * Math.sin(angle) + z * Math.cos(angle);
+
+                            const screenX = centerX + rotX * scale;
+                            const screenY = centerY + y * scale;
+                            const brightness = (rotZ + maxR) / (2 * maxR);
+
+                            points.push({ x: screenX, y: screenY, prob, brightness });
+                        }
+                    }
+                }
+            }
+
+            points.sort((a, b) => a.brightness - b.brightness);
+
+            points.forEach(point => {
+                const hue = 200 + point.brightness * 100;
+                const alpha = Math.min(point.prob * 20, 0.8);
+                ctx.fillStyle = `hsla(${hue}, 100%, 60%, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Draw nucleus
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function animate() {
+            if (isAnimating) {
+                drawOrbital();
+                angle += rotationSpeed;
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function setN(value) {
+            n = value;
+            document.getElementById('n-value').textContent = value;
+            document.querySelectorAll('.control-group .quantum-numbers button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update available l values
+            const lButtons = document.getElementById('l-buttons');
+            lButtons.innerHTML = '';
+            const orbitalLabels = ['s', 'p', 'd', 'f', 'g', 'h'];
+            for (let i = 0; i < n; i++) {
+                const label = i < orbitalLabels.length ? orbitalLabels[i] : i;
+                const btn = document.createElement('button');
+                btn.className = 'quantum-btn' + (i === 0 ? ' active' : '');
+                btn.textContent = `l=${i} (${label})`;
+                btn.onclick = () => setL(i);
+                lButtons.appendChild(btn);
+            }
+            setL(0);
+            updateInfo();
+        }
+
+        function setL(value) {
+            l = value;
+            document.getElementById('l-value').textContent = value;
+            document.querySelectorAll('#l-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update available m values
+            const mButtons = document.getElementById('m-buttons');
+            mButtons.innerHTML = '';
+            for (let i = -l; i <= l; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'quantum-btn' + (i === 0 ? ' active' : '');
+                btn.textContent = `m=${i}`;
+                btn.onclick = () => setM(i);
+                mButtons.appendChild(btn);
+            }
+            setM(0);
+            updateInfo();
+        }
+
+        function setM(value) {
+            m = value;
+            document.getElementById('m-value').textContent = value;
+            document.querySelectorAll('#m-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            updateInfo();
+        }
+
+        function updateDetail(value) {
+            detail = parseInt(value);
+            document.getElementById('detail-value').textContent = value;
+        }
+
+        function updateThreshold(value) {
+            threshold = value / 1000;
+            document.getElementById('threshold-value').textContent = threshold.toFixed(3);
+        }
+
+        function updateRotation(value) {
+            rotationSpeed = value / 1000;
+            document.getElementById('rotation-value').textContent = rotationSpeed.toFixed(3);
+        }
+
+        function updateInfo() {
+            const orbitalLabels = ['s', 'p', 'd', 'f', 'g', 'h'];
+            const orbital = n + (l < orbitalLabels.length ? orbitalLabels[l] : l);
+            document.getElementById('orbital-name').textContent = orbital;
+
+            const energy = -13.6 / (n * n);
+            document.getElementById('energy').textContent = energy.toFixed(3);
+
+            const deg = 2 * l + 1;
+            document.getElementById('degeneracy').textContent = deg;
+
+            const nodes = n - l - 1;
+            document.getElementById('nodes').textContent = nodes;
+        }
+
+        function resetView() {
+            angle = 0;
+        }
+
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        });
+
+        updateInfo();
+        animate();
+    </script>
+</body>
+
+</html>

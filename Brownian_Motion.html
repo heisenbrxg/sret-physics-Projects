@@ -1,0 +1,786 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brownian Motion - Multiple Pollen Grains</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4fd1c5;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(79, 209, 197, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8899aa;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 25px;
+        }
+
+        .controls {
+            background: rgba(30, 35, 55, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(79, 209, 197, 0.3);
+            height: fit-content;
+            backdrop-filter: blur(10px);
+        }
+
+        .canvas-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .canvas-container {
+            background: rgba(30, 35, 55, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(79, 209, 197, 0.3);
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .container-label {
+            position: absolute;
+            top: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(79, 209, 197, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #4fd1c5;
+            border: 1px solid rgba(79, 209, 197, 0.5);
+            z-index: 10;
+            backdrop-filter: blur(5px);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            border-radius: 15px;
+            border: 3px solid rgba(79, 209, 197, 0.4);
+            box-shadow: inset 0 0 50px rgba(79, 209, 197, 0.1);
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(79, 209, 197, 0.2);
+        }
+
+        .control-group:last-child {
+            border-bottom: none;
+        }
+
+        .control-group h3 {
+            color: #4fd1c5;
+            margin-bottom: 18px;
+            font-size: 1.15em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group h3::before {
+            content: "⚛️";
+            font-size: 1.2em;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b0c4de;
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 8px;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(79, 209, 197, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4fd1c5 0%, #36b5a8 100%);
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(79, 209, 197, 0.6);
+            transition: all 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(79, 209, 197, 0.8);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4fd1c5 0%, #36b5a8 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 15px rgba(79, 209, 197, 0.6);
+        }
+
+        .value-display {
+            color: #4fd1c5;
+            font-weight: bold;
+            font-size: 0.95em;
+            text-align: right;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4fd1c5 0%, #36b5a8 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(79, 209, 197, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(79, 209, 197, 0.6);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c94277 100%);
+            box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);
+        }
+
+        .reset-btn:hover {
+            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.6);
+        }
+
+        .stats {
+            background: rgba(15, 20, 35, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 25px;
+            border: 1px solid rgba(79, 209, 197, 0.3);
+        }
+
+        .stats h3 {
+            color: #4fd1c5;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats h3::before {
+            content: "📊";
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+            padding: 8px;
+            background: rgba(79, 209, 197, 0.05);
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            color: #8899aa;
+        }
+
+        .stat-value {
+            color: #4fd1c5;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: rgba(79, 209, 197, 0.1);
+            border: 2px solid rgba(79, 209, 197, 0.3);
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 25px;
+            font-size: 0.9em;
+            line-height: 1.7;
+        }
+
+        .info-box strong {
+            color: #4fd1c5;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        .pollen-color {
+            background: radial-gradient(circle, #ffd700 0%, #ff8c00 100%);
+        }
+
+        .fluid-color {
+            background: radial-gradient(circle, #1e90ff 0%, #0066cc 100%);
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔬 Brownian Motion Simulator</h1>
+        <p class="subtitle">Watch 10 pollen grains moving randomly - they bounce off each other and blue fluid
+            molecules!</p>
+
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group">
+                    <h3>Fluid Properties</h3>
+
+                    <label>
+                        Temperature (K): <span class="value-display" id="tempValue">300</span>
+                    </label>
+                    <input type="range" id="temperature" min="100" max="500" step="10" value="300">
+
+                    <label>
+                        Fluid Viscosity (η): <span class="value-display" id="viscosityValue">1.0</span>
+                    </label>
+                    <input type="range" id="viscosity" min="0.1" max="3" step="0.1" value="1.0">
+
+                    <label>
+                        Fluid Molecule Count: <span class="value-display" id="moleculeValue">250</span>
+                    </label>
+                    <input type="range" id="molecules" min="100" max="500" step="50" value="250">
+                </div>
+
+                <div class="control-group">
+                    <h3>Pollen Grains</h3>
+
+                    <label>
+                        Pollen Size (μm): <span class="value-display" id="sizeValue">12</span>
+                    </label>
+                    <input type="range" id="pollenSize" min="8" max="20" step="1" value="12">
+
+                    <label>
+                        Pollen Mass: <span class="value-display" id="massValue">1.0</span>
+                    </label>
+                    <input type="range" id="pollenMass" min="0.5" max="3" step="0.1" value="1.0">
+
+                    <label>
+                        Show Trails: <span class="value-display" id="trailValue">80</span>
+                    </label>
+                    <input type="range" id="trailLength" min="0" max="200" step="10" value="80">
+                </div>
+
+                <div class="control-group">
+                    <h3>Simulation</h3>
+
+                    <label>
+                        Speed: <span class="value-display" id="speedValue">1.0x</span>
+                    </label>
+                    <input type="range" id="speed" min="0.5" max="3" step="0.1" value="1.0">
+                </div>
+
+                <div class="button-group">
+                    <button id="pauseBtn">⏸ Pause</button>
+                    <button class="reset-btn" id="resetBtn">🔄 Reset</button>
+                </div>
+
+                <div class="stats">
+                    <h3>Measurements</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Time Elapsed:</span>
+                        <span class="stat-value" id="timeValue">0.00 s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Fluid Collisions:</span>
+                        <span class="stat-value" id="collisions">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Pollen Collisions:</span>
+                        <span class="stat-value" id="pollenCollisions">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Pollen Count:</span>
+                        <span class="stat-value">10 grains</span>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color pollen-color"></div>
+                        <span>Pollen Grains</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color fluid-color"></div>
+                        <span>Blue Fluid</span>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <strong>💡 About:</strong> This simulation shows pure Brownian motion - 10 pollen grains move
+                    randomly due to constant bombardment by blue fluid molecules. When pollen grains collide with each
+                    other, they bounce off realistically. Higher temperature increases molecular activity!
+                </div>
+            </div>
+
+            <div class="canvas-section">
+                <div class="canvas-container">
+                    <div class="container-label">🧪 Blue Fluid Container</div>
+                    <canvas id="canvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth - 50;
+            canvas.height = Math.min(700, window.innerHeight - 200);
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Fluid Molecule class (blue!)
+        class FluidMolecule {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = (Math.random() - 0.5) * 5;
+                this.radius = 2;
+            }
+
+            update(temperature, viscosity, dt) {
+                const tempFactor = Math.sqrt(temperature / 300);
+
+                this.vx += (Math.random() - 0.5) * 0.6 * tempFactor;
+                this.vy += (Math.random() - 0.5) * 0.6 * tempFactor;
+
+                this.vx *= (1 - 0.01 * viscosity);
+                this.vy *= (1 - 0.01 * viscosity);
+
+                const maxSpeed = 5 * tempFactor;
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (speed > maxSpeed) {
+                    this.vx = (this.vx / speed) * maxSpeed;
+                    this.vy = (this.vy / speed) * maxSpeed;
+                }
+
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+
+                if (this.x < 0 || this.x > canvas.width) {
+                    this.vx *= -1;
+                    this.x = Math.max(0, Math.min(canvas.width, this.x));
+                }
+                if (this.y < 0 || this.y > canvas.height) {
+                    this.vy *= -1;
+                    this.y = Math.max(0, Math.min(canvas.height, this.y));
+                }
+            }
+
+            draw(ctx) {
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 4);
+                gradient.addColorStop(0, 'rgba(30, 144, 255, 0.9)');
+                gradient.addColorStop(1, 'rgba(30, 144, 255, 0)');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Pollen Grain class with pure Brownian motion
+        class PollenGrain {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = 0;
+                this.vy = 0;
+                this.trail = [];
+                this.mass = 1.0;
+                this.collisionFlash = 0;
+            }
+
+            update(molecules, pollens, params, dt) {
+                const { pollenSize, temperature, viscosity, pollenMass } = params;
+
+                this.mass = pollenMass;
+
+                // Check collisions with fluid molecules
+                molecules.forEach(mol => {
+                    const mdx = this.x - mol.x;
+                    const mdy = this.y - mol.y;
+                    const distance = Math.sqrt(mdx * mdx + mdy * mdy);
+
+                    if (distance < pollenSize + mol.radius) {
+                        params.collisionCount++;
+
+                        const angle = Math.atan2(mdy, mdx);
+                        const force = Math.sqrt(mol.vx * mol.vx + mol.vy * mol.vy);
+
+                        // Mass affects how much the pollen moves
+                        const impactFactor = 0.25 / this.mass;
+                        this.vx += Math.cos(angle) * force * impactFactor;
+                        this.vy += Math.sin(angle) * force * impactFactor;
+
+                        mol.vx = -mol.vx * 0.8;
+                        mol.vy = -mol.vy * 0.8;
+                    }
+                });
+
+                // Check collisions with other pollen grains
+                pollens.forEach(other => {
+                    if (other === this) return;
+
+                    const pdx = this.x - other.x;
+                    const pdy = this.y - other.y;
+                    const distance = Math.sqrt(pdx * pdx + pdy * pdy);
+                    const minDist = pollenSize * 2;
+
+                    if (distance < minDist && distance > 0) {
+                        params.pollenCollisionCount++;
+
+                        // Elastic collision between pollen grains
+                        const angle = Math.atan2(pdy, pdx);
+                        const overlap = minDist - distance;
+
+                        // Separate the particles proportional to their masses
+                        const totalMass = this.mass + other.mass;
+                        const separationX = Math.cos(angle) * overlap;
+                        const separationY = Math.sin(angle) * overlap;
+
+                        this.x += separationX * (other.mass / totalMass);
+                        this.y += separationY * (other.mass / totalMass);
+                        other.x -= separationX * (this.mass / totalMass);
+                        other.y -= separationY * (this.mass / totalMass);
+
+                        // Calculate relative velocity
+                        const dvx = this.vx - other.vx;
+                        const dvy = this.vy - other.vy;
+
+                        // Calculate impulse (elastic collision with mass)
+                        const impulse = (dvx * pdx + dvy * pdy) / (distance * distance);
+                        const restitution = 0.85;
+
+                        const massRatio1 = (2 * other.mass) / totalMass;
+                        const massRatio2 = (2 * this.mass) / totalMass;
+
+                        this.vx -= pdx * impulse * restitution * massRatio1;
+                        this.vy -= pdy * impulse * restitution * massRatio1;
+                        other.vx += pdx * impulse * restitution * massRatio2;
+                        other.vy += pdy * impulse * restitution * massRatio2;
+
+                        // Visual flash effect
+                        this.collisionFlash = 10;
+                        other.collisionFlash = 10;
+                    }
+                });
+
+                // Random thermal kicks (Brownian motion)
+                const thermNoise = Math.sqrt(temperature / 300) * 0.15 / Math.sqrt(this.mass);
+                this.vx += (Math.random() - 0.5) * thermNoise;
+                this.vy += (Math.random() - 0.5) * thermNoise;
+
+                // Viscous damping (Stokes' law)
+                const dragCoeff = viscosity * 0.03;
+                this.vx *= (1 - dragCoeff);
+                this.vy *= (1 - dragCoeff);
+
+                // Update position
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+
+                // Container boundaries with energy loss
+                if (this.x < pollenSize) {
+                    this.x = pollenSize;
+                    this.vx *= -0.7;
+                }
+                if (this.x > canvas.width - pollenSize) {
+                    this.x = canvas.width - pollenSize;
+                    this.vx *= -0.7;
+                }
+                if (this.y < pollenSize) {
+                    this.y = pollenSize;
+                    this.vy *= -0.7;
+                }
+                if (this.y > canvas.height - pollenSize) {
+                    this.y = canvas.height - pollenSize;
+                    this.vy *= -0.7;
+                }
+
+                // Store trail
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > params.trailLength) {
+                    this.trail.shift();
+                }
+
+                // Decrease collision flash
+                if (this.collisionFlash > 0) {
+                    this.collisionFlash--;
+                }
+            }
+
+            draw(ctx, pollenSize) {
+                // Draw trail
+                if (this.trail.length > 1) {
+                    ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+
+                    for (let i = 1; i < this.trail.length; i++) {
+                        const alpha = (i / this.trail.length) * 0.4;
+                        ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.stroke();
+                }
+
+                // Collision flash effect
+                const flashIntensity = this.collisionFlash ? this.collisionFlash / 10 : 0;
+
+                // Draw pollen grain with glow effect
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, pollenSize
+                );
+                gradient.addColorStop(0, '#ffd700');
+                gradient.addColorStop(0.6, '#ff8c00');
+                gradient.addColorStop(1, 'rgba(255, 140, 0, 0)');
+
+                // Outer glow (brighter during collision)
+                ctx.fillStyle = `rgba(255, 215, 0, ${0.3 + flashIntensity * 0.5})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, pollenSize + 5 + flashIntensity * 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Main grain
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, pollenSize, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Add texture
+                ctx.fillStyle = 'rgba(139, 69, 19, 0.3)';
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const rx = this.x + Math.cos(angle) * pollenSize * 0.6;
+                    const ry = this.y + Math.sin(angle) * pollenSize * 0.6;
+                    ctx.beginPath();
+                    ctx.arc(rx, ry, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Highlight
+                ctx.fillStyle = `rgba(255, 255, 255, ${0.4 + flashIntensity * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(this.x - pollenSize * 0.3, this.y - pollenSize * 0.3, pollenSize * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Simulation state
+        let molecules = [];
+        let pollens = [];
+        const POLLEN_COUNT = 10;
+        let time = 0;
+        let isPaused = false;
+
+        const params = {
+            temperature: 300,
+            viscosity: 1.0,
+            moleculeCount: 250,
+            pollenSize: 12,
+            pollenMass: 1.0,
+            trailLength: 80,
+            speed: 1.0,
+            collisionCount: 0,
+            pollenCollisionCount: 0
+        };
+
+        // Initialize
+        function init() {
+            molecules = [];
+            for (let i = 0; i < params.moleculeCount; i++) {
+                molecules.push(new FluidMolecule());
+            }
+
+            pollens = [];
+            for (let i = 0; i < POLLEN_COUNT; i++) {
+                pollens.push(new PollenGrain());
+            }
+
+            time = 0;
+            params.collisionCount = 0;
+            params.pollenCollisionCount = 0;
+        }
+
+        // Animation loop
+        function animate() {
+            if (!isPaused) {
+                // Clear with fade effect
+                ctx.fillStyle = 'rgba(15, 20, 25, 0.15)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const dt = params.speed;
+
+                // Update fluid molecules
+                molecules.forEach(mol => mol.update(params.temperature, params.viscosity, dt));
+
+                // Update all pollen grains
+                pollens.forEach(pollen => pollen.update(molecules, pollens, params, dt));
+
+                // Draw molecules
+                molecules.forEach(mol => mol.draw(ctx));
+
+                // Draw all pollen grains
+                pollens.forEach(pollen => pollen.draw(ctx, params.pollenSize));
+
+                // Update time and stats
+                time += dt * 0.01;
+
+                document.getElementById('timeValue').textContent = time.toFixed(2) + ' s';
+                document.getElementById('collisions').textContent = params.collisionCount;
+                document.getElementById('pollenCollisions').textContent = Math.floor(params.pollenCollisionCount / 2);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Controls
+        document.getElementById('temperature').addEventListener('input', (e) => {
+            params.temperature = parseInt(e.target.value);
+            document.getElementById('tempValue').textContent = params.temperature;
+        });
+
+        document.getElementById('viscosity').addEventListener('input', (e) => {
+            params.viscosity = parseFloat(e.target.value);
+            document.getElementById('viscosityValue').textContent = params.viscosity.toFixed(1);
+        });
+
+        document.getElementById('molecules').addEventListener('input', (e) => {
+            params.moleculeCount = parseInt(e.target.value);
+            document.getElementById('moleculeValue').textContent = params.moleculeCount;
+            init();
+        });
+
+        document.getElementById('pollenSize').addEventListener('input', (e) => {
+            params.pollenSize = parseInt(e.target.value);
+            document.getElementById('sizeValue').textContent = params.pollenSize;
+        });
+
+        document.getElementById('pollenMass').addEventListener('input', (e) => {
+            params.pollenMass = parseFloat(e.target.value);
+            document.getElementById('massValue').textContent = params.pollenMass.toFixed(1);
+        });
+
+        document.getElementById('trailLength').addEventListener('input', (e) => {
+            params.trailLength = parseInt(e.target.value);
+            document.getElementById('trailValue').textContent = params.trailLength;
+        });
+
+        document.getElementById('speed').addEventListener('input', (e) => {
+            params.speed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = params.speed.toFixed(1) + 'x';
+        });
+
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            isPaused = !isPaused;
+            document.getElementById('pauseBtn').innerHTML = isPaused ? '▶ Resume' : '⏸ Pause';
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            init();
+        });
+
+        // Start simulation
+        init();
+        animate();
+    </script>
+</body>
+
+</html>

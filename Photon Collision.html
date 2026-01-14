@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Compton Effect — Enhanced Live Simulation</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #eaf4ff;
+  margin: 0;
+  padding: 15px;
+}
+.container {
+  display: grid;
+  grid-template-columns: 470px 1fr;
+  gap: 15px;
+}
+.card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+label { font-weight: bold; }
+canvas {
+  border-radius: 10px;
+  background: #04172e;
+}
+.button {
+  padding: 7px 15px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  background: #0b72ff;
+  color: white;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.button:hover { background: #005ad3; }
+.values b { color: #0028a0; }
+</style>
+</head>
+
+<body>
+
+<h2>🔵 Compton Effect — Advanced Live Simulation</h2>
+<p>This simulation shows photon–electron collision, wavelength change, energy loss of scattered photons, and recoil of electrons.</p>
+
+<div class="container">
+
+<!-- Animation -->
+<div class="card">
+  <h3>Photon Collision Visualization</h3>
+  <canvas id="simCanvas" width="450" height="280"></canvas><br>
+
+  <label>Scattering Angle (θ): <span id="angleText">60</span>°</label><br>
+  <input type="range" min="0" max="180" value="60" id="angleSlider" style="width:100%;"> 
+
+  <button id="toggleBtn" class="button">⏸ Pause</button>
+</div>
+
+<!-- Graph + Values -->
+<div class="card">
+  <div>
+    <label>Incident Wavelength (nm):</label>
+    <input type="number" id="lambda" value="0.01" step="0.0001"><br><br>
+  </div>
+
+  <canvas id="graph" height="200"></canvas>
+
+  <div class="values">
+    <h3>Calculated Output</h3>
+    Δλ (wavelength shift): <b><span id="shift">---</span> pm</b><br>
+    Scattered wavelength λ′: <b><span id="final">---</span> pm</b><br>
+    Photon energy: <b><span id="E0">---</span> keV</b><br>
+    Scattered photon energy: <b><span id="E1">---</span> keV</b><br>
+    Electron kinetic energy: <b><span id="Ek">---</span> keV</b><br>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// CONSTANTS — physics
+const h = 6.626e-34, c = 3e8, me = 9.109e-31, eV = 1.602e-19;
+const lambdaC = h / (me * c);
+
+// ELEMENTS
+const λinput = document.getElementById("lambda");
+const θslider = document.getElementById("angleSlider");
+const θtext   = document.getElementById("angleText");
+
+// RESULT SPANS
+const shiftSpan = document.getElementById("shift");
+const finalSpan = document.getElementById("final");
+const E0Span    = document.getElementById("E0");
+const E1Span    = document.getElementById("E1");
+const EkSpan    = document.getElementById("Ek");
+
+// GRAPH SETUP — dynamic Δλ vs θ plot
+const graph = new Chart(document.getElementById("graph"), {
+  type: "line",
+  data: { labels: [], datasets:[{ label:"Δλ (pm)", data:[], borderWidth:3 }] },
+  options: {
+    scales: {
+      x: { title: { display: true, text: "Scattering angle (°)" }},
+      y: { title: { display: true, text: "Wavelength shift Δλ (pm)" }}
+    }
+  }
+});
+
+function updateCalculation() {
+  let λ_nm = parseFloat(λinput.value);
+  let θ_deg = parseFloat(θslider.value);
+  θtext.textContent = θslider.value;
+
+  let λ = λ_nm * 1e-9;
+  let θ = θ_deg * Math.PI / 180;
+
+  let Δλ = lambdaC * (1 - Math.cos(θ));
+  let λprime = λ + Δλ;
+
+  let E0 = (h*c)/(λ*eV)/1000;
+  let E1 = (h*c)/(λprime*eV)/1000;
+
+  shiftSpan.textContent = (Δλ * 1e12).toFixed(6);
+  finalSpan.textContent = (λprime * 1e12).toFixed(6);
+  E0Span.textContent    = E0.toFixed(4);
+  E1Span.textContent    = E1.toFixed(4);
+  EkSpan.textContent    = (E0 - E1).toFixed(4);
+
+  let angles = [], shifts = [];
+  for (let i = 0; i <= 180; i++) {
+    angles.push(i);
+    shifts.push((lambdaC * (1 - Math.cos(i * Math.PI / 180))) * 1e12);
+  }
+  graph.data.labels = angles;
+  graph.data.datasets[0].data = shifts;
+  graph.update();
+}
+
+// ANIMATION SECTION
+const canvas = document.getElementById("simCanvas");
+const ctx = canvas.getContext("2d");
+let photonX = 20;
+let running = true;
+const toggleBtn = document.getElementById("toggleBtn");
+
+toggleBtn.onclick = () => {
+  running = !running;
+  toggleBtn.textContent = running ? "⏸ Pause" : "▶ Play";
+};
+
+function drawPhoton(x, y, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x-12, y);
+  ctx.lineTo(x+12, y);
+  ctx.stroke();
+}
+
+function drawArrow(x1, y1, x2, y2, color, text) {
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+
+  let angle = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 7 * Math.cos(angle - 0.4), y2 - 7 * Math.sin(angle - 0.4));
+  ctx.lineTo(x2 - 7 * Math.cos(angle + 0.4), y2 - 7 * Math.sin(angle + 0.4));
+  ctx.fill();
+
+  ctx.fillText(text, (x1 + x2) / 2, (y1 + y2) / 2 - 5);
+}
+
+function animate() {
+  if (!running) return requestAnimationFrame(animate);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let θ = θslider.value * Math.PI / 180;
+
+  // ELECTRON (before collision)
+  ctx.fillStyle = "#FFD700";
+  ctx.beginPath();
+  ctx.arc(225, 140, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Incoming photon
+  drawPhoton(photonX, 140, "#00c8ff");
+
+  photonX += 3;
+
+  if (photonX >= 225) {  
+    // Scattered photon
+    drawArrow(225, 140, 225 + Math.cos(θ) * 120, 140 - Math.sin(θ) * 120, "#FF644A", "Photon λ'");
+    // Electron recoil
+    drawArrow(225, 140, 225 + Math.cos(θ + Math.PI) * 60, 140 - Math.sin(θ + Math.PI) * 60, "#F4E409", "Electron");
+
+    photonX = 20;
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// EVENT LISTENERS
+λinput.addEventListener("input", updateCalculation);
+θslider.addEventListener("input", updateCalculation);
+
+updateCalculation();
+animate();
+</script>
+</body>
+</html>

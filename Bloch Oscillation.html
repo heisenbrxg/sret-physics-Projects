@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+     
+    <meta charset="utf-8" />
+      <title>Bloch Oscillation Simulator (1D tight-binding)</title>
+     
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+      <style>
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+            margin: 16px;
+            color: #111;
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            font-size: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 12px 0 16px;
+        }
+
+        .control {
+            display: flex;
+            flex-direction: column;
+            min-width: 160px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        input[type="range"] {
+            width: 220px;
+        }
+
+        canvas {
+            background: #fff;
+            border: 1px solid #ddd;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        button {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #999;
+            background: #f6f6f6;
+            cursor: pointer;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #555;
+        }
+
+        #info {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #444;
+            max-width: 820px;
+        }
+
+        .chart {
+            width: 820px;
+            height: 160px;
+        }
+
+        .topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+      <div class="topline">
+            <h1>Bloch Oscillation Simulator — Tight-binding 1D</h1>
+            <div class="small">Units: ħ = 1, lattice spacing a = 1. Time evolution uses Crank–Nicolson (unitary).</div>
+          </div>
+
+      <div class="controls">
+            <div class="control">
+                  <label>Number of sites N (<span id="Ndisp">101</span>)</label>
+                  <input id="N" type="range" min="51" max="401" step="2" value="101">
+                </div>
+            <div class="control">
+                  <label>Hopping J (<span id="Jdisp">1.0</span>)</label>
+                  <input id="J" type="range" min="0.1" max="3" step="0.05" value="1.0">
+                </div>
+            <div class="control">
+                  <label>Force F (field) (<span id="Fdisp">0.04</span>)</label>
+                  <input id="F" type="range" min="0.0" max="0.5" step="0.005" value="0.04">
+                </div>
+            <div class="control">
+                  <label>Time step dt (<span id="dtdisp">0.2</span>)</label>
+                  <input id="dt" type="range" min="0.02" max="0.6" step="0.02" value="0.2">
+                </div>
+            <div class="control">
+                  <label>Initial center (site) (<span id="x0disp">50</span>)</label>
+                  <input id="x0" type="range" min="0" max="100" step="1" value="50">
+                </div>
+            <div class="control">
+                  <label>Initial width σ (sites) (<span id="sigmadisp">5</span>)</label>
+                  <input id="sigma" type="range" min="1" max="20" step="0.5" value="5">
+                </div>
+          </div>
+
+      <div class="row" style="gap:8px; margin-bottom:8px;">
+            <button id="startBtn">Start</button>
+            <button id="pauseBtn">Pause</button>
+            <button id="resetBtn">Reset</button>
+            <div class="small">Time: <span id="time">0.00</span></div>
+            <div class="small">⟨x⟩: <span id="xexp">0.00</span></div>
+          </div>
+
+      <canvas id="probCanvas" width="820" height="220"></canvas>
+      <canvas id="chartCanvas" class="chart" width="820" height="160"></canvas>
+
+      <div id="info">
+            <strong>About this simulation</strong>
+            <p>We model a 1D tight-binding lattice (sites n = 0..N-1). Hamiltonian:
+                  <code>H = -J ∑ (|n⟩⟨n+1| + |n+1⟩⟨n|) + F ∑ n |n⟩⟨n|</code>.
+                  A constant force F (linear potential) produces Bloch oscillations: the wavepacket's center ⟨x⟩
+            oscillates in time instead of accelerating indefinitely.
+                </p>
+            <p><strong>Real-life examples:</strong> Bloch oscillations were observed in electrons in semiconductor
+            superlattices and very clean crystals (challenging due to scattering), and very clearly in cold atoms in
+            optical lattices — cold-atom experiments are the modern standard demonstration.</p>
+          </div>
+
+    <script>
+        /* ------------------------
+           Complex arithmetic helpers
+           ------------------------ */
+        class C {
+            constructor(re = 0, im = 0) { this.re = re; this.im = im; }
+            add(b) { return new C(this.re + b.re, this.im + b.im); }
+            sub(b) { return new C(this.re - b.re, this.im - b.im); }
+            mul(b) {
+                if (typeof b === 'number') return new C(this.re * b, this.im * b);
+                return new C(this.re * b.re - this.im * b.im, this.re * b.im + this.im * b.re);
+            }
+            div(b) {
+                if (typeof b === 'number') return new C(this.re / b, this.im / b);
+                const denom = b.re * b.re + b.im * b.im;
+                return new C((this.re * b.re + this.im * b.im) / denom, (this.im * b.re - this.re * b.im) / denom);
+            }
+            conj() { return new C(this.re, -this.im); }
+            abs2() { return this.re * this.re + this.im * this.im; }
+            static i() { return new C(0, 1); }
+        }
+
+        /* ------------------------
+           Crank-Nicolson implementation
+           Solve (I + i dt/2 H) ψ_{t+dt} = (I - i dt/2 H) ψ_t
+           H is tridiagonal: diag = V[n], off-diag = -J
+           So A's off-diags = - i dt/2 * J
+           B's off-diags = + i dt/2 * J
+           Use Thomas algorithm adapted to complex numbers.
+           ------------------------ */
+
+        function createInitialWavepacket(N, x0, sigma, k0 = 0) {
+            // Gaussian wavepacket in site basis, optionally with momentum k0
+            const psi = new Array(N);
+            let norm = 0;
+            for (let n = 0; n < N; n++) {
+                const x = n;
+                const re = Math.exp(-0.5 * ((x - x0) * (x - x0)) / (sigma * sigma)) * Math.cos(k0 * (x - x0));
+                const im = Math.exp(-0.5 * ((x - x0) * (x - x0)) / (sigma * sigma)) * Math.sin(k0 * (x - x0));
+                psi[n] = new C(re, im);
+                norm += psi[n].abs2();
+            }
+            norm = Math.sqrt(norm);
+            for (let n = 0; n < N; n++) psi[n] = psi[n].div(norm);
+            return psi;
+        }
+
+        function multiplyB(N, psi, V, J, dt) {
+            // compute rhs = B * psi where B = I - i dt/2 * H
+            // B diag: 1 - i dt/2 * V[n]
+            // B offdiag: + i dt/2 * J
+            const rhs = new Array(N);
+            const half = dt / 2;
+            const iC = new C(0, 1);
+            const off = iC.mul(dt * J * 0.5); // + i dt/2 * J
+            for (let n = 0; n < N; n++) {
+                // main diag term
+                const diag = new C(1, 0).sub(iC.mul(half * V[n]));
+                let val = diag.mul(psi[n]);
+                // left neighbor
+                if (n > 0) val = val.add(off.mul(psi[n - 1]));
+                if (n < N - 1) val = val.add(off.mul(psi[n + 1]));
+                rhs[n] = val;
+            }
+            return rhs;
+        }
+
+        function solveTridiagonalA(N, rhs, V, J, dt) {
+            // Solve A x = rhs where A is tridiagonal with:
+            // main diag a_n = 1 + i dt/2 * V[n]
+            // off-diags: lower = upper = - i dt/2 * J
+            const half = dt / 2;
+            const iC = new C(0, 1);
+            const off = iC.mul(-half * J); // - i dt/2 * J
+            // Thomas algorithm with complex numbers
+            // We'll store modified coefficients
+            const cprime = new Array(N - 1);
+            const dprime = new Array(N);
+            // first row
+            const a0 = new C(1, 0).add(iC.mul(half * V[0]));
+            cprime[0] = off.div(a0);
+            dprime[0] = rhs[0].div(a0);
+            // forward sweep
+            for (let n = 1; n < N - 1; n++) {
+                const an = new C(1, 0).add(iC.mul(half * V[n]));
+                const denom = an.sub(off.mul(cprime[n - 1])); // an - off * cprime[n-1]
+                cprime[n] = off.div(denom);
+                dprime[n] = rhs[n].sub(off.mul(dprime[n - 1])).div(denom);
+            }
+            // last row
+            const aN = new C(1, 0).add(iC.mul(half * V[N - 1]));
+            const denomLast = aN.sub(off.mul(cprime[N - 2]));
+            dprime[N - 1] = rhs[N - 1].sub(off.mul(dprime[N - 2])).div(denomLast);
+            // back substitution
+            const x = new Array(N);
+            x[N - 1] = dprime[N - 1];
+            for (let n = N - 2; n >= 0; n--) {
+                x[n] = dprime[n].sub(cprime[n].mul(x[n + 1]));
+            }
+            return x;
+        }
+
+        /* ------------------------
+           Expectation values + normalization
+           ------------------------ */
+        function normalize(psi) {
+            let s = 0;
+            for (let n = 0; n < psi.length; n++) s += psi[n].abs2();
+            const norm = Math.sqrt(s);
+            if (norm === 0) return psi;
+            for (let n = 0; n < psi.length; n++) psi[n] = psi[n].div(norm);
+            return psi;
+        }
+
+        function expectationX(psi) {
+            let ex = 0;
+            for (let n = 0; n < psi.length; n++) ex += n * psi[n].abs2();
+            return ex;
+        }
+
+        /* ------------------------
+           UI, rendering, and animation
+           ------------------------ */
+        const probCanvas = document.getElementById('probCanvas');
+        const ctx = probCanvas.getContext('2d');
+        const chartCanvas = document.getElementById('chartCanvas');
+        const cctx = chartCanvas.getContext('2d');
+
+        const Nslider = document.getElementById('N');
+        const Jslider = document.getElementById('J');
+        const Fslider = document.getElementById('F');
+        const dtslider = document.getElementById('dt');
+        const x0slider = document.getElementById('x0');
+        const sigmaslider = document.getElementById('sigma');
+
+        const Ndisp = document.getElementById('Ndisp');
+        const Jdisp = document.getElementById('Jdisp');
+        const Fdisp = document.getElementById('Fdisp');
+        const dtdisp = document.getElementById('dtdisp');
+        const x0disp = document.getElementById('x0disp');
+        const sigmadisp = document.getElementById('sigmadisp');
+
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const timedisp = document.getElementById('time');
+        const xexpdisp = document.getElementById('xexp');
+
+        let N = parseInt(Nslider.value);
+        let J = parseFloat(Jslider.value);
+        let F = parseFloat(Fslider.value);
+        let dt = parseFloat(dtslider.value);
+        let x0 = parseInt(x0slider.value);
+        let sigma = parseFloat(sigmaslider.value);
+
+        Ndisp.textContent = N;
+        Jdisp.textContent = J.toFixed(2);
+        Fdisp.textContent = F.toFixed(3);
+        dtdisp.textContent = dt.toFixed(2);
+        x0disp.textContent = x0;
+        sigmadisp.textContent = sigma.toFixed(1);
+
+        let psi = createInitialWavepacket(N, x0, sigma);
+        let V = new Array(N).fill(0);
+        let time = 0;
+        let running = false;
+
+        // data for chart
+        let chartData = [];
+
+        function buildPotential() {
+            // linear potential with origin at leftmost site
+            // if want center-based potential, shift V[n] = F*(n - N/2)
+            for (let n = 0; n < N; n++) {
+                V[n] = F * (n - Math.floor(N / 2)); // center potential zero at center
+            }
+        }
+
+        function stepCN() {
+            // B * psi -> rhs
+            const rhs = multiplyB(N, psi, V, J, dt);
+            // solve A x = rhs
+            const next = solveTridiagonalA(N, rhs, V, J, dt);
+            psi = normalize(next);
+            time += dt;
+            const ex = expectationX(psi);
+            chartData.push({ t: time, x: ex });
+            if (chartData.length > 1600) chartData.shift();
+            return ex;
+        }
+
+        function drawProbability() {
+            const w = probCanvas.width;
+            const h = probCanvas.height;
+            ctx.clearRect(0, 0, w, h);
+            // draw probability as vertical bars
+            const maxBar = 0.12; // visual scaling
+            const barW = w / N;
+            for (let n = 0; n < N; n++) {
+                const p = psi[n].abs2();
+                const barH = Math.min(h, p / maxBar * h);
+                ctx.fillStyle = '#3b82f6';
+                ctx.fillRect(n * barW, h - barH, barW - 1, barH);
+            }
+            // draw center line and expectation marker
+            const ex = expectationX(psi);
+            ctx.fillStyle = '#ff5c5c';
+            ctx.beginPath();
+            ctx.arc((ex + 0.5) * barW, h - 6, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawChart() {
+            const w = chartCanvas.width;
+            const h = chartCanvas.height;
+            cctx.clearRect(0, 0, w, h);
+            // axes
+            cctx.strokeStyle = '#aaa';
+            cctx.lineWidth = 1;
+            cctx.beginPath();
+            cctx.moveTo(40, 10);
+            cctx.lineTo(40, h - 30);
+            cctx.lineTo(w - 10, h - 30);
+            cctx.stroke();
+            // plot x(t)
+            if (chartData.length < 2) return;
+            // find t range
+            const t0 = chartData[0].t;
+            const t1 = chartData[chartData.length - 1].t;
+            const xmin = t0, xmax = t1;
+            let ymin = Infinity, ymax = -Infinity;
+            for (const p of chartData) { if (p.x < ymin) ymin = p.x; if (p.x > ymax) ymax = p.x; }
+            if (ymin === ymax) { ymin -= 1; ymax += 1; }
+            const pad = 10;
+            const plotW = w - 60;
+            const plotH = h - 50;
+            cctx.strokeStyle = '#333';
+            cctx.beginPath();
+            for (let i = 0; i < chartData.length; i++) {
+                const p = chartData[i];
+                const sx = 40 + ((p.t - xmin) / (xmax - xmin)) * plotW;
+                const sy = 10 + (1 - (p.x - ymin) / (ymax - ymin)) * plotH;
+                if (i === 0) cctx.moveTo(sx, sy); else cctx.lineTo(sx, sy);
+            }
+            cctx.lineWidth = 2;
+            cctx.strokeStyle = '#0f766e';
+            cctx.stroke();
+            // labels
+            cctx.fillStyle = '#333';
+            cctx.font = '11px sans-serif';
+            cctx.fillText('t', w - 20, h - 12);
+            cctx.fillText('⟨x⟩', 8, 14);
+        }
+
+        function updateDisplays() {
+            timedisp.textContent = time.toFixed(2);
+            xexpdisp.textContent = expectationX(psi).toFixed(3);
+            Ndisp.textContent = N;
+            Jdisp.textContent = J.toFixed(2);
+            Fdisp.textContent = F.toFixed(3);
+            dtdisp.textContent = dt.toFixed(2);
+            x0disp.textContent = x0;
+            sigmadisp.textContent = sigma.toFixed(1);
+        }
+
+        /* Animation loop */
+        let rafId = null;
+        function animate() {
+            if (running) {
+                // take several small steps to keep stable render if dt is small/large
+                // We'll do one CN step per animation frame for simplicity
+                const ex = stepCN();
+                updateDisplays();
+                drawProbability();
+                drawChart();
+            }
+            rafId = requestAnimationFrame(animate);
+        }
+
+        /* Event handlers */
+        Nslider.addEventListener('input', () => {
+            N = parseInt(Nslider.value);
+            // ensure odd N for center symmetry
+            if (N % 2 === 0) N += 1;
+            Nslider.value = N;
+            // update x0 slider max
+            x0slider.max = N - 1;
+            x0 = Math.min(x0, N - 1);
+            x0slider.value = x0;
+            x0disp.textContent = x0;
+            // reset wavefunction and potential
+            resetSimulation();
+        });
+        Jslider.addEventListener('input', () => { J = parseFloat(Jslider.value); Jdisp.textContent = J.toFixed(2); });
+        Fslider.addEventListener('input', () => { F = parseFloat(Fslider.value); Fdisp.textContent = F.toFixed(3); buildPotential(); });
+        dtslider.addEventListener('input', () => { dt = parseFloat(dtslider.value); dtdisp.textContent = dt.toFixed(2); });
+        x0slider.addEventListener('input', () => { x0 = parseInt(x0slider.value); x0disp.textContent = x0; });
+        sigmaslider.addEventListener('input', () => { sigma = parseFloat(sigmaslider.value); sigmadisp.textContent = sigma.toFixed(1); });
+
+        startBtn.addEventListener('click', () => { running = true; });
+        pauseBtn.addEventListener('click', () => { running = false; });
+        resetBtn.addEventListener('click', resetSimulation);
+
+        function resetSimulation() {
+            running = false;
+            // recreate psi, potential, time, chart
+            psi = createInitialWavepacket(N, x0, sigma);
+            buildPotential();
+            time = 0;
+            chartData = [];
+            updateDisplays();
+            drawProbability();
+            drawChart();
+        }
+
+        /* initialize */
+        buildPotential();
+        resetSimulation();
+        animate();
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <title>Sunlight Reflection Simulation</title>
+
+  <style>
+
+    body {
+
+      display: flex;
+
+      justify-content: center;
+
+      align-items: center;
+
+      height: 100vh;
+
+      background: #BFEFFF; /* baby blue background */
+
+      margin: 0;
+
+      flex-direction: column;
+
+      font-family: Arial, sans-serif;
+
+    }
+
+    #scene {
+
+      position: relative;
+
+      width: 90%;
+
+      height: 70%;
+
+    }
+
+    .sun {
+
+      position: absolute;
+
+      top: 10px;
+
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      width: 120px;
+
+      height: 120px;
+
+      background: radial-gradient(circle, #FFD700, #FFA500);
+
+      border-radius: 50%;
+
+      box-shadow: 0 0 60px 30px rgba(255, 215, 0, 0.6);
+
+      z-index: 5;
+
+    }
+
+
+
+    #icons {
+
+      position: absolute;
+
+      right: 20px;
+
+      top: 20px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 22px;
+
+      font-size: 44px;
+
+      cursor: pointer;
+
+      user-select: none;
+
+      z-index: 20;
+
+    }
+
+    #icons div:hover {
+
+      transform: scale(1.12);
+
+      transition: 0.15s;
+
+    }
+
+
+
+    #center-icon {
+
+      position: absolute;
+
+      width: 100px;
+
+      height: 100px;
+
+      font-size: 72px;
+
+      line-height: 100px;
+
+      text-align: center;
+
+      left: 50%;
+
+      top: calc(50% + 80px);
+
+      transform: translate(-50%, -50%);
+
+      pointer-events: none;
+
+      display: none;
+
+      z-index: 10;
+
+    }
+
+
+
+    .ray {
+
+      position: absolute;
+
+      height: 2px;
+
+      transform-origin: 0% 50%;
+
+      opacity: 0;
+
+      width: 0;
+
+      z-index: 6;
+
+    }
+
+    .ray.play {
+
+      animation: draw 0.8s linear forwards;
+
+    }
+
+    @keyframes draw {
+
+      from { width: 0; opacity: 1; }
+
+      to   { opacity: 1; }
+
+    }
+
+
+
+    #controls {
+
+      margin-top: 20px;
+
+      display: flex;
+
+      gap: 12px;
+
+      z-index: 5;
+
+    }
+
+    button {
+
+      padding: 10px 20px;
+
+      font-size: 16px;
+
+      border: none;
+
+      border-radius: 8px;
+
+      background: #f1c40f;
+
+      cursor: pointer;
+
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+
+    }
+
+    button:hover {
+
+      background: #d4ac0d;
+
+    }
+
+
+
+    #spectrum {
+
+      width: 90%;
+
+      height: 220px;
+
+      margin-top: 40px;
+
+      z-index: 1;
+
+    }
+
+    .axis-label {
+
+      font-size: 16px;
+
+      font-family: Arial, sans-serif;
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div id="scene">
+
+    <div class="sun" id="sun"></div>
+
+
+
+    <div id="icons">
+
+      <div data-color="blue" data-emoji="🫐">🫐</div>
+
+      <div data-color="red" data-emoji="🍅">🍅</div>
+
+      <div data-color="green" data-emoji="🍃">🍃</div>
+
+      <div data-color="white" data-emoji="🥛">🥛</div>
+
+      <div data-color="black" data-emoji="🕷️">🕷️</div>
+
+    </div>
+
+
+
+    <div id="center-icon"></div>
+
+
+
+    <div id="rays"></div>
+
+    <div id="reflections"></div>
+
+  </div>
+
+
+
+  <div id="controls">
+
+    <button onclick="startSim()">Start</button>
+
+    <button onclick="resetAll()">Reset</button>
+
+  </div>
+
+
+
+  <svg id="spectrum"></svg>
+
+
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <script>
+
+    const sun = document.getElementById("sun");
+
+    const rays = document.getElementById("rays");
+
+    const reflections = document.getElementById("reflections");
+
+    const centerIcon = document.getElementById("center-icon");
+
+    let currentColor = null;
+
+
+
+    function getSunBottom(parent){
+
+      const sr = sun.getBoundingClientRect();
+
+      const pr = parent.getBoundingClientRect();
+
+      return {
+
+        x: sr.left - pr.left + sr.width/2,
+
+        y: sr.bottom - pr.top
+
+      };
+
+    }
+
+
+
+    function getCenterIconHitPoint(parent) {
+
+      const ir = centerIcon.getBoundingClientRect();
+
+      const pr = parent.getBoundingClientRect();
+
+      return {
+
+        x: ir.left - pr.left + ir.width / 2,
+
+        y: ir.top - pr.top + ir.height / 2
+
+      };
+
+    }
+
+
+
+    function addRay(x1,y1,x2,y2,color,container){
+
+      const dx = x2-x1, dy = y2-y1;
+
+      const length = Math.sqrt(dx*dx+dy*dy);
+
+      const angle = Math.atan2(dy,dx)*180/Math.PI;
+
+      const ray = document.createElement("div");
+
+      ray.className="ray";
+
+      ray.style.background = (color === "gray") ? "white" : color;
+
+      ray.style.left = x1+"px";
+
+      ray.style.top = y1+"px";
+
+      ray.style.transform = `rotate(${angle}deg)`;
+
+      ray.dataset.length = length;
+
+      container.appendChild(ray);
+
+      return ray;
+
+    }
+
+
+
+    function playRay(ray){
+
+      return new Promise(resolve => {
+
+        ray.style.width = ray.dataset.length+"px"; 
+
+        ray.classList.add("play");
+
+        ray.addEventListener("animationend", resolve, {once:true});
+
+      });
+
+    }
+
+
+
+    document.querySelectorAll("#icons div").forEach(icon => {
+
+      icon.addEventListener("click", () => {
+
+        centerIcon.textContent = icon.dataset.emoji;
+
+        centerIcon.style.display = "block";
+
+        currentColor = icon.dataset.color;
+
+      });
+
+    });
+
+
+
+    async function startSim(){
+
+      if(!currentColor) return;
+
+
+
+      rays.innerHTML="";
+
+      reflections.innerHTML="";
+
+      const scene = document.getElementById("scene");
+
+      const sunBottom = getSunBottom(scene);
+
+      const hitPoint = getCenterIconHitPoint(scene);
+
+
+
+      const ray = addRay(sunBottom.x, sunBottom.y, hitPoint.x, hitPoint.y, "gray", rays);
+
+      await playRay(ray);
+
+
+
+      if(currentColor === "white"){
+
+        const colors = ["red","orange","yellow","green","blue","indigo","violet"];
+
+        const spread = 140;
+
+        const step = spread / (colors.length - 1);
+
+        for (let i=0; i<colors.length; i++){
+
+          const offset = -spread/2 + i*step;
+
+          const ref = addRay(hitPoint.x, hitPoint.y, hitPoint.x+offset, hitPoint.y-130, colors[i], reflections);
+
+          await playRay(ref);
+
+        }
+
+      }
+
+      else if(currentColor === "red"){
+
+        const ref = addRay(hitPoint.x, hitPoint.y, hitPoint.x-40, hitPoint.y-110, "red", reflections);
+
+        await playRay(ref);
+
+      }
+
+      else if(currentColor === "green"){
+
+        const ref = addRay(hitPoint.x, hitPoint.y, hitPoint.x+25, hitPoint.y-110, "green", reflections);
+
+        await playRay(ref);
+
+      }
+
+      else if(currentColor === "blue"){
+
+        const ref = addRay(hitPoint.x, hitPoint.y, hitPoint.x+55, hitPoint.y-110, "blue", reflections);
+
+        await playRay(ref);
+
+      }
+
+    }
+
+
+
+    function resetSim(){
+
+      rays.innerHTML = "";
+
+      reflections.innerHTML = "";
+
+      centerIcon.style.display = "none";
+
+      centerIcon.textContent = "";
+
+      currentColor = null;
+
+    }
+
+
+
+    const svg = d3.select("#spectrum"),
+
+          width = svg.node().clientWidth,
+
+          height = svg.node().clientHeight,
+
+          margin = {top: 20, right: 30, bottom: 50, left: 70};
+
+
+
+    const x = d3.scaleLinear().domain([200, 3000]).range([margin.left, width - margin.right]);
+
+    const y = d3.scaleLinear().domain([0, 1]).range([height - margin.bottom, margin.top]);
+
+
+
+    svg.append("g")
+
+      .attr("transform", `translate(0,${height - margin.bottom})`)
+
+      .call(d3.axisBottom(x).ticks(8))
+
+      .append("text")
+
+      .attr("class", "axis-label")
+
+      .attr("x", width / 2)
+
+      .attr("y", 40)
+
+      .attr("fill", "black")
+
+      .text("wavelength λ (nm)");
+
+
+
+    svg.append("g")
+
+      .attr("transform", `translate(${margin.left},0)`)
+
+      .call(d3.axisLeft(y).ticks(0))
+
+      .append("text")
+
+      .attr("class", "axis-label")
+
+      .attr("transform", "rotate(-90)")
+
+      .attr("x", -height / 2)
+
+      .attr("y", -50)
+
+      .attr("fill", "black")
+
+      .attr("text-anchor", "middle")
+
+      .text("radiation intensity");
+
+
+
+    const visibleStart = 380, visibleEnd = 750;
+
+    const grad = svg.append("defs")
+
+      .append("linearGradient")
+
+      .attr("id", "spectrumGradient")
+
+      .attr("x1", "0%").attr("y1", "0%")
+
+      .attr("x2", "100%").attr("y2", "0%");
+
+    const colors = [
+
+      {offset: "0%", color: "violet"},
+
+      {offset: "17%", color: "blue"},
+
+      {offset: "33%", color: "cyan"},
+
+      {offset: "50%", color: "green"},
+
+      {offset: "67%", color: "yellow"},
+
+      {offset: "83%", color: "orange"},
+
+      {offset: "100%", color: "red"}
+
+    ];
+
+    grad.selectAll("stop")
+
+      .data(colors)
+
+      .enter()
+
+      .append("stop")
+
+      .attr("offset", d => d.offset)
+
+      .attr("stop-color", d => d.color);
+
+
+
+    svg.append("rect")
+
+      .attr("x", x(visibleStart))
+
+      .attr("y", y(0.9))
+
+      .attr("width", x(visibleEnd) - x(visibleStart))
+
+      .attr("height", y(0) - y(0.9))
+
+      .style("fill", "url(#spectrumGradient)")
+
+      .style("stroke", "black")
+
+      .style("stroke-dasharray", "6,3");
+
+
+
+    svg.append("text")
+
+      .attr("x", x(280))
+
+      .attr("y", y(0.5))
+
+      .attr("text-anchor", "middle")
+
+      .style("font-size", "18px")
+
+      .style("font-family", "Arial")
+
+      .text("UV");
+
+
+
+    svg.append("text")
+
+      .attr("x", x((visibleStart + visibleEnd)/2))
+
+      .attr("y", y(0.95) - 10)
+
+      .attr("text-anchor", "middle")
+
+      .style("font-size", "18px")
+
+      .style("font-family", "Arial")
+
+      .text("visible");
+
+
+
+    svg.append("text")
+
+      .attr("x", x(1500))
+
+      .attr("y", y(0.5))
+
+      .attr("text-anchor", "middle")
+
+      .style("font-size", "18px")
+
+      .style("font-family", "Arial")
+
+      .text("infrared");
+
+
+
+    svg.append("line")
+
+      .attr("x1", x(visibleStart))
+
+      .attr("x2", x(200))
+
+      .attr("y1", y(0.95))
+
+      .attr("y2", y(0.95))
+
+      .attr("stroke", "black");
+
+
+
+    svg.append("line")
+
+      .attr("x1", x(visibleEnd))
+
+      .attr("x2", x(3000))
+
+      .attr("y1", y(0.95))
+
+      .attr("y2", y(0.95))
+
+      .attr("stroke", "black");
+
+
+
+    const fadeGroup = svg.append("g");
+
+
+
+    function fadeRegion(start, end) {
+
+      fadeGroup.append("rect")
+
+        .attr("class", "fade-region")
+
+        .attr("x", x(start))
+
+        .attr("y", y(0.9))
+
+        .attr("width", x(end) - x(start))
+
+        .attr("height", y(0) - y(0.9))
+
+        .attr("fill", "white")
+
+        .attr("opacity", 0)
+
+        .transition()
+
+        .duration(1500)
+
+        .attr("opacity", 1);
+
+    }
+
+
+
+    function resetSpectrum(){
+
+      fadeGroup.selectAll(".fade-region").remove();
+
+    }
+
+
+
+    function resetAll() {
+
+      resetSim();
+
+      resetSpectrum();
+
+    }
+
+
+
+    document.querySelector('[data-color="red"]').addEventListener("click", ()=>fadeRegion(620,750));
+
+    document.querySelector('[data-color="green"]').addEventListener("click", ()=>fadeRegion(495,570));
+
+    document.querySelector('[data-color="blue"]').addEventListener("click", ()=>fadeRegion(450,495));
+
+    document.querySelector('[data-color="white"]').addEventListener("click", ()=>fadeRegion(380,750));
+
+  </script>
+
+</body>
+
+</html>

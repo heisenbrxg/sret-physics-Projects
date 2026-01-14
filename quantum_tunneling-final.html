@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quantum Tunneling</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 36px;
+      margin-bottom: 16px;
+    }
+
+    /* Layout: canvas left, sidebar right */
+    .main {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      justify-content: center;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .canvas-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    canvas {
+      border: 1px solid black;
+      background-color: #f0f8ff;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 300px;
+    }
+
+    .controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;          /* more spacing between rows */
+  padding: 20px;      /* bigger padding inside the box */
+  border: 2px solid black; /* thicker border for emphasis */
+  background-color: #f9f9f9;
+  align-items: stretch;
+  width: 360px;       /* make the whole box wider */
+  font-size: 18px;    /* enlarge text inside the box */
+}
+
+.control-row {
+  display: flex;
+  gap: 12px;          /* more space between label and slider */
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;     /* add vertical padding for taller rows */
+}
+
+.control-row label {
+  min-width: 120px;   /* wider label area */
+  white-space: nowrap;
+  font-size: 18px;    /* bigger label text */
+  font-weight: 600;
+}
+
+.control-row input[type="range"] {
+  flex: 1;
+  margin-left: 12px;  /* push slider slightly to the right */
+  height: 30px;       /* make slider track thicker */
+}
+
+.control-row span {
+  width: 50px;        /* wider numeric value box */
+  text-align: right;
+  font-size: 18px;    /* bigger numeric text */
+  font-weight: 600;
+}
+    .buttons-below {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    button {
+      padding: 6px 12px;
+      font-size: 16px;
+    }
+
+    .legend {
+      padding: 16px;
+      border: 1px solid black;
+      background-color: #f9f9f9;
+      font-size: 24px;
+    }
+
+    .legend div {
+      margin: 6px 0;
+    }
+
+    /* ---- NEW: increase numeric value size next to sliders (no other changes) ---- */
+    #widthLabel, #energyLabel, #barrierEnergyLabel {
+      font-size: 25px;    /* change this number to your preferred size */
+      font-weight: 600;
+      color: #111;
+    }
+    /* optional: increase slider label font only if desired (commented out)*/
+    .control-row label {
+      font-size: 21px;
+      font-weight: 300;
+    }
+    
+  </style>
+</head>
+<body>
+  <h2>Quantum Tunneling</h2>
+
+  <div class="main">
+    <div class="canvas-area">
+      <canvas id="canvas" width="700" height="420"></canvas>
+
+      <!-- Start / Stop buttons returned below the canvas -->
+      <div class="buttons-below">
+        <button id="startBtn" onclick="start()">Start</button>
+        <button id="stopBtn" onclick="stop()">Stop</button>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="controls">
+        <div class="control-row">
+          <label for="barrierWidth"><strong>Barrier width:</strong></label>
+          <input type="range" id="barrierWidth" min="30" max="220" step="10" value="120" oninput="updateBarrierWidth(this.value)">
+          <span id="widthLabel">12.0</span>
+          <span style="margin-left:4px">nm</span>
+        </div>
+
+        <div class="control-row">
+          <label for="particleEnergy"><strong>Particle energy:</strong></label>
+          <input type="range" id="particleEnergy" min="1" max="20" step="1" value="5" oninput="updateParticleEnergy(this.value)">
+          <span id="energyLabel">5</span>
+          <span style="margin-left:4px">eV</span>
+        </div>
+
+        <div class="control-row">
+          <label for="barrierEnergy"><strong>Barrier energy:</strong></label>
+          <input type="range" id="barrierEnergy" min="1" max="20" step="1" value="10" oninput="updateBarrierEnergy(this.value)">
+          <span id="barrierEnergyLabel">10</span>
+          <span style="margin-left:4px">eV</span>
+        </div>
+      </div>
+
+      <div class="legend">
+        <strong>Wave color legend</strong>
+        <div style="color: green;">● Reflected wave</div>
+        <div style="color: purple;">● Transmitted wave</div>
+        <div style="color: red;">● Barrier</div>
+        <hr>
+        <strong>Wave energy percentages</strong>
+        <div id="reflectPercent">Reflection: --%</div>
+        <div id="transmitPercent">Transmission: --%</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const N = 220;
+    const dx = canvas.width / N;
+
+    let t = 0;
+    let animationId = null;
+
+    let barrierStart = 90;
+    let barrierWidthPx = 120;
+    let particleEnergy = 5; // eV
+    let barrierEnergy = 10; // eV
+    let splitTriggered = false;
+    let splitTime = 0;
+    let impactCenter = 0;
+    let barrierEnd = barrierStart + Math.round(barrierWidthPx / dx);
+
+    // Conversion: 1 px = 0.1 nm
+    const PX_TO_NM = 0.1;
+
+    function setBarrierEndFromWidthPx(px) {
+      const indexWidth = Math.round(px / dx);
+      barrierEnd = barrierStart + indexWidth;
+    }
+
+    function updateBarrierWidth(val) {
+      barrierWidthPx = parseInt(val, 10);
+      setBarrierEndFromWidthPx(barrierWidthPx);
+
+      const Lpx = (barrierEnd - barrierStart) * dx;
+      const Lnm = Lpx * PX_TO_NM;
+      document.getElementById("widthLabel").textContent = Lnm.toFixed(1);
+
+      // Do NOT update percentages before the hit
+      if (!animationId) {
+        drawStatic();
+        document.getElementById("reflectPercent").textContent = "Reflection: --%";
+        document.getElementById("transmitPercent").textContent = "Transmission: --%";
+      }
+    }
+
+    function updateParticleEnergy(val) {
+      particleEnergy = parseInt(val, 10);
+      document.getElementById("energyLabel").textContent = particleEnergy;
+
+      // Do NOT update percentages before the hit
+      if (!animationId) {
+        drawStatic();
+        document.getElementById("reflectPercent").textContent = "Reflection: --%";
+        document.getElementById("transmitPercent").textContent = "Transmission: --%";
+      }
+    }
+
+    function updateBarrierEnergy(val) {
+      barrierEnergy = parseInt(val, 10);
+      document.getElementById("barrierEnergyLabel").textContent = barrierEnergy;
+
+      // Do NOT update percentages before the hit
+      if (!animationId) {
+        drawStatic();
+        document.getElementById("reflectPercent").textContent = "Reflection: --%";
+        document.getElementById("transmitPercent").textContent = "Transmission: --%";
+      }
+    }
+
+    function drawBarrier() {
+      ctx.beginPath();
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < N; i++) {
+        const x = i * dx;
+        const y = canvas.height - (i >= barrierStart && i < barrierEnd ? 300 : 0);
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    function drawBullet(x) {
+      const y = canvas.height / 2;
+      ctx.fillStyle = "#555";
+      ctx.fillRect(x - 12, y - 8, 24, 16);
+      ctx.beginPath();
+      ctx.fillStyle = "#777";
+      ctx.moveTo(x + 12, y - 4);
+      ctx.lineTo(x + 20, y);
+      ctx.lineTo(x + 12, y + 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "orange";
+      ctx.moveTo(x - 12, y - 3);
+      ctx.lineTo(x - 26, y);
+      ctx.lineTo(x - 12, y + 3);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawWave(color, direction, origin, scale, localT, splitT) {
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < N; i++) {
+        const x = i * dx;
+        const pos = direction === "right"
+          ? x - (origin + (localT - splitT) * 5)
+          : x - (origin - (localT - splitT) * 5);
+        const psi = Math.exp(-0.01 * pos * pos) * Math.cos(0.2 * x - localT);
+        const y = canvas.height / 2 - psi * scale;
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // Percentages appear ONLY after hit; depend on width (nm), particle energy (eV), barrier energy (eV)
+    function computeAndUpdatePercentages(Lpx) {
+      const Lnm = Lpx * PX_TO_NM;
+
+      // Base reflection grows with width (linear clamp)
+      const minR = 15, maxR = 95;
+      const minWidth = 4, maxWidth = 22; // nm range corresponding to slider
+      let baseR = minR + (maxR - minR) * ((Lnm - minWidth) / (maxWidth - minWidth));
+      baseR = Math.max(minR, Math.min(maxR, baseR));
+
+      // Energy contrast:
+      // Higher barrierEnergy → more reflection
+      // Higher particleEnergy → more transmission (less reflection)
+      const energyContrast = barrierEnergy - particleEnergy; // positive → more reflection
+      const energyFactor = energyContrast * 4; // ~4% per eV contrast
+
+      let R = baseR + energyFactor;
+      R = Math.max(minR, Math.min(maxR, R));
+      const T = 100 - R;
+
+      document.getElementById("reflectPercent").textContent = `Reflection: ${R.toFixed(1)}%`;
+      document.getElementById("transmitPercent").textContent = `Transmission: ${T.toFixed(1)}%`;
+
+      // Visual scaling
+      const A0 = 60;
+      const AR = A0 * (R / 100);
+      const AT = A0 * (T / 100);
+      return { AR, AT };
+    }
+
+    function drawStatic() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBarrier();
+      drawBullet(30);
+    }
+
+    function drawFrame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBarrier();
+
+      const Lpx = (barrierEnd - barrierStart) * dx;
+      const barrierX = barrierStart * dx;
+      const center = 30 + t * 70;
+
+      // Trigger split when bullet reaches barrier
+      if (!splitTriggered && center >= barrierX) {
+        splitTriggered = true;
+        splitTime = t;
+        impactCenter = center;
+      }
+
+      if (!splitTriggered) {
+        drawBullet(center);
+      } else {
+        const { AR, AT } = computeAndUpdatePercentages(Lpx);
+        drawWave("green", "left", impactCenter, AR, t, splitTime);
+        drawWave("purple", "right", impactCenter, AT, t, splitTime);
+      }
+
+      t += 0.02;
+      animationId = requestAnimationFrame(drawFrame);
+    }
+
+    // Keep start/stop functions available
+    function start() {
+      if (!animationId) {
+        t = 0;
+        splitTriggered = false;
+        splitTime = 0;
+        impactCenter = 0;
+
+        document.getElementById("reflectPercent").textContent = "Reflection: --%";
+        document.getElementById("transmitPercent").textContent = "Transmission: --%";
+
+        drawFrame();
+      }
+    }
+
+    function stop() {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+    }
+
+    window.addEventListener("load", () => {
+      setBarrierEndFromWidthPx(barrierWidthPx);
+      const Lpx = (barrierEnd - barrierStart) * dx;
+      const Lnm = Lpx * PX_TO_NM;
+      document.getElementById("widthLabel").textContent = Lnm.toFixed(1);
+
+      document.getElementById("reflectPercent").textContent = "Reflection: --%";
+      document.getElementById("transmitPercent").textContent = "Transmission: --%";
+
+      drawStatic();
+    });
+  </script>
+</body>
+</html>

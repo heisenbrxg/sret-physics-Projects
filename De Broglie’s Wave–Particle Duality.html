@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>De Broglie’s Dual Nature of Light Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #000010, #000);
+            font-family: "Poppins", Arial, sans-serif;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* === Graph Panel === */
+        #graphPanel {
+            width: 23%;
+            height: 85%;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            margin-left: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 10px;
+        }
+
+        #graphPanel h3 {
+            margin-top: 6px;
+            font-size: 14px;
+            color: cyan;
+            text-shadow: 0 0 6px cyan;
+        }
+
+        canvas#graph {
+            width: 90%;
+            height: 160px;
+            background: rgba(10, 20, 30, 0.9);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+        }
+
+        /* === Info/Control Panel === */
+        #info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px 16px;
+            border-radius: 12px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            font-size: 14px;
+        }
+
+        #info h2 {
+            margin: 0 0 8px 0;
+            color: #00ffff;
+            text-shadow: 0 0 6px cyan;
+        }
+
+        input[type="range"] {
+            width: 200px;
+            accent-color: cyan;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Graph + Info Panel -->
+    <div id="graphPanel">
+        <h3>📊 Momentum vs Wavelength</h3>
+        <canvas id="graph"></canvas>
+    </div>
+
+    <div id="info">
+        <h2>⚛ De Broglie’s Dual Nature of Light</h2>
+        <p>Momentum (p): <span id="momentum">2.00</span> kg·m/s</p>
+        <p>Wavelength (λ = h/p): <span id="wavelength">3.31e-34</span> m</p>
+        <label>Adjust Momentum:</label><br />
+        <input type="range" id="momentumSlider" min="0.5" max="5" step="0.1" value="2" />
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        /* === Constants === */
+        const h = 6.626e-34;
+        let p = 2.0;
+        let lambda = h / p;
+
+        /* === 3D Scene Setup === */
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, 1.3, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth * 0.75, window.innerHeight);
+        renderer.setClearColor(0x000000);
+        document.body.appendChild(renderer.domElement);
+
+        /* === Lighting === */
+        const ambientLight = new THREE.AmbientLight(0x404040, 1.2);
+        const pointLight = new THREE.PointLight(0x00ffff, 1, 30);
+        scene.add(ambientLight, pointLight);
+
+        /* === Wave Surface (Interference Pattern) === */
+        const planeGeometry = new THREE.PlaneGeometry(10, 6, 100, 60);
+        const planeMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ffff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.6
+        });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2;
+        scene.add(plane);
+
+        /* === Particle (Photon/Electron) === */
+        const particleGeometry = new THREE.SphereGeometry(0.15, 32, 32);
+        const particleMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffd700,
+            emissive: 0xffa500,
+            emissiveIntensity: 0.8,
+            roughness: 0.3,
+            metalness: 0.7
+        });
+        const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+        scene.add(particle);
+
+        /* === Diffraction/Interference “screen” === */
+        const screenGeometry = new THREE.PlaneGeometry(6, 3);
+        const screenMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.2
+        });
+        const screen = new THREE.Mesh(screenGeometry, screenMaterial);
+        screen.position.set(0, 1, -4);
+        scene.add(screen);
+
+        /* === Camera Position === */
+        camera.position.set(0, 2, 8);
+        camera.lookAt(0, 0, 0);
+
+        /* === Momentum/Wavelength Controls === */
+        const pDisplay = document.getElementById("momentum");
+        const λDisplay = document.getElementById("wavelength");
+        const slider = document.getElementById("momentumSlider");
+
+        slider.addEventListener("input", () => {
+            p = parseFloat(slider.value);
+            lambda = h / p;
+            pDisplay.textContent = p.toFixed(2);
+            λDisplay.textContent = lambda.toExponential(2);
+            updateGraph(p, lambda);
+        });
+
+        /* === Chart.js Graph === */
+        const ctx = document.getElementById("graph").getContext("2d");
+        const graphData = {
+            labels: [],
+            datasets: [
+                {
+                    label: "λ = h/p",
+                    data: [],
+                    borderColor: "cyan",
+                    backgroundColor: "rgba(0,255,255,0.2)",
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                },
+            ],
+        };
+        const graphOptions = {
+            scales: {
+                x: { title: { display: true, text: "Momentum (p)" }, ticks: { color: "#00ffff" } },
+                y: { title: { display: true, text: "Wavelength (λ)" }, ticks: { color: "#00ffff" } },
+            },
+            plugins: { legend: { labels: { color: "#00ffff" } } },
+            animation: false,
+            responsive: true,
+            maintainAspectRatio: false,
+        };
+        const graph = new Chart(ctx, { type: "line", data: graphData, options: graphOptions });
+
+        function updateGraph(pVal, λVal) {
+            graph.data.labels.push(pVal.toFixed(2));
+            graph.data.datasets[0].data.push(λVal);
+            if (graph.data.labels.length > 25) {
+                graph.data.labels.shift();
+                graph.data.datasets[0].data.shift();
+            }
+            graph.update();
+        }
+
+        /* === Animation (Wave + Particle + Pattern) === */
+        let t = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            t += 0.03;
+
+            // Wave motion: interference pattern
+            const pos = plane.geometry.attributes.position;
+            const count = pos.count;
+            for (let i = 0; i < count; i++) {
+                const x = pos.getX(i);
+                const y = pos.getY(i);
+                const z = 0.4 * Math.sin((x * 3 + t) / (lambda * 1e34)) *
+                    Math.cos((y * 3 + t) / (lambda * 1e34));
+                pos.setZ(i, z);
+            }
+            pos.needsUpdate = true;
+
+            // Particle traveling across interference field
+            particle.position.x = Math.sin(t * 0.3) * 4;
+            particle.position.z = Math.cos(t * 0.25) * 2;
+            particle.position.y = 0.3 * Math.sin(t * 1.5);
+
+            // Update point light
+            pointLight.position.copy(particle.position);
+
+            // Create visible interference “bands” on screen
+            const intensity = Math.abs(Math.sin(t + particle.position.x)) * 0.4 + 0.1;
+            screen.material.opacity = intensity;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        /* === Responsive Resizing === */
+        window.addEventListener("resize", () => {
+            camera.aspect = (window.innerWidth * 0.75) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth * 0.75, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

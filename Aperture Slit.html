@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Uncertainty Principle — Interactive Aperture Simulation (Live)</title>
+    <style>
+        :root {
+            --bg: #071023;
+            --muted: #9fb0c9;
+            --accent: #60a5fa
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: Inter, system-ui, Arial;
+            background: linear-gradient(180deg, #051025, #071126);
+            color: #e6eef8
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 22px auto;
+            padding: 18px
+        }
+
+        header {
+            display: flex;
+            gap: 12px;
+            align-items: center
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 18px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 16px;
+            margin-top: 14px
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 10px
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin: 8px 0;
+            color: var(--muted)
+        }
+
+        input[type=range] {
+            width: 100%
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .btn {
+            background: var(--accent);
+            border: none;
+            padding: 8px 10px;
+            border-radius: 8px;
+            color: #041427;
+            cursor: pointer;
+            font-weight: 600
+        }
+
+        canvas {
+            width: 100%;
+            height: 360px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+            border-radius: 8px
+        }
+
+        .stat {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px
+        }
+
+        .stat>div {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 8px;
+            border-radius: 8px;
+            flex: 1
+        }
+
+        .small {
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .credit {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 8px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M12 2v20M2 12h20" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+            <div>
+                <h1>Uncertainty Principle — Microscope (Aperture Slit) — Live Interactive</h1>
+                <div class="small">Drag sliders and watch the electron wave, aperture, and momentum distribution update
+                    instantly. Photon rays are visible for intuition.</div>
+            </div>
+        </header>
+
+        <div class="grid">
+            <div class="panel">
+                <label>Initial position x₀</label>
+                <input id="x0" type="range" min="-4" max="4" step="0.01" value="-4">
+                <div class="row"><input id="x0num" type="number" step="0.01" value="-4" style="width:80px"> <span
+                        class="small">units</span></div>
+
+                <label>Initial width σ₀</label>
+                <input id="sigma" type="range" min="0.05" max="1.5" step="0.01" value="0.35">
+                <div class="row"><input id="sigmanum" type="number" step="0.01" value="0.35" style="width:80px"> <span
+                        class="small">units</span></div>
+
+                <label>Central momentum k₀ (wave-number)</label>
+                <input id="k0" type="range" min="0" max="20" step="0.01" value="8">
+                <div class="row"><input id="k0num" type="number" step="0.01" value="8" style="width:80px"> <span
+                        class="small">1/units</span></div>
+
+                <label>Aperture width (slit) a — drag to change in real time</label>
+                <input id="aperture" type="range" min="0.05" max="6" step="0.01" value="1.0">
+                <div class="row"><input id="apernum" type="number" step="0.01" value="1.0" style="width:80px"> <span
+                        class="small">units</span></div>
+
+                <label>Photon beam intensity (visual)</label>
+                <input id="photonIntensity" type="range" min="0" max="1" step="0.01" value="0.7">
+                <div class="row"><input id="phnum" type="number" step="0.01" value="0.7" style="width:80px"> <span
+                        class="small">0–1</span></div>
+
+                <label>ħ (reduced Planck constant)</label>
+                <input id="hbar" type="range" min="0.05" max="6.626" step="0.01" value="1">
+                <div class="row"><input id="hbarnum" type="number" step="0.01" value="1" style="width:80px"> <span
+                        class="small">use 1 for natural units</span></div>
+
+                <div style="margin-top:10px" class="row">
+                    <button id="pause" class="btn">Pause</button>
+                    <button id="resume" class="btn" style="background:#334155;color:#e6eef8">Resume</button>
+                    <button id="reset" class="btn" style="background:#334155;color:#e6eef8">Reset</button>
+                </div>
+
+                <div class="stat">
+                    <div>
+                        <div class="small">Δx (post-aperture position σ)</div>
+                        <div id="dx" style="font-weight:700;font-size:16px">—</div>
+                    </div>
+                    <div>
+                        <div class="small">Δp (momentum uncertainty)</div>
+                        <div id="dp" style="font-weight:700;font-size:16px">—</div>
+                    </div>
+                    <div>
+                        <div class="small">Δx · Δp</div>
+                        <div id="prod" style="font-weight:700;font-size:16px">—</div>
+                    </div>
+                </div>
+
+                <div class="credit">Live notes: The transmitted wave (after slit) is computed each frame; its momentum
+                    distribution is obtained via FFT. For performance, the grid size is balanced for interactivity.
+                </div>
+            </div>
+
+            <div>
+                <div class="panel">
+                    <canvas id="simCanvas" width="900" height="420"></canvas>
+                </div>
+
+                <div class="panel">
+                    <strong class="small">Tips</strong>
+                    <ul>
+                        <li>Drag <em>Aperture width</em> left (narrow) to see stronger diffraction and larger Δp.</li>
+                        <li>Try different k₀ to shift the momentum center.</li>
+                        <li>If the simulation feels slow on your machine, decrease the window size in the browser or
+                            close other tabs.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Helpers & DOM ---
+        const $ = id => document.getElementById(id);
+        const simCanvas = $('simCanvas'); const sCtx = simCanvas.getContext('2d');
+
+        const x0 = $('x0'), x0num = $('x0num');
+        const sigma = $('sigma'), sigmanum = $('sigmanum');
+        const k0 = $('k0'), k0num = $('k0num');
+        const aperture = $('aperture'), apernum = $('apernum');
+        const photonIntensity = $('photonIntensity'), phnum = $('phnum');
+        const hbar = $('hbar'), hbarnum = $('hbarnum');
+
+        const pauseBtn = $('pause'), resumeBtn = $('resume'), resetBtn = $('reset');
+        const dxEl = $('dx'), dpEl = $('dp'), prodEl = $('prod');
+
+        function bind(sl, num) { sl.addEventListener('input', () => { num.value = sl.value; }); num.addEventListener('input', () => { sl.value = num.value; }); }
+        bind(x0, x0num); bind(sigma, sigmanum); bind(k0, k0num); bind(aperture, apernum); bind(photonIntensity, phnum); bind(hbar, hbarnum);
+
+        // ---- numerical grid ----
+        const N = 1024; // smaller for better interactivity
+        const XMIN = -10, XMAX = 10;
+        const dx = (XMAX - XMIN) / N;
+        const xGrid = new Float64Array(N);
+        for (let i = 0; i < N; i++) xGrid[i] = XMIN + (i + 0.5) * dx;
+
+        // gaussian helper (returns complex)
+        function gaussianComplex(x, x0v, s0, k0v) {
+            const arg = -0.5 * Math.pow((x - x0v) / s0, 2);
+            const amp = Math.exp(arg);
+            const phase = k0v * (x - x0v);
+            return { re: amp * Math.cos(phase), im: amp * Math.sin(phase) };
+        }
+
+        // FFT (in-place, Cooley-Tukey)
+        function fft(re, im) {
+            const n = re.length; const levels = Math.log2(n);
+            if (Math.floor(levels) !== levels) throw new Error('N must be power of 2');
+            // bit-reverse
+            for (let i = 0; i < n; i++) {
+                let j = 0; for (let bit = 0; bit < levels; bit++) j = (j << 1) | ((i >> bit) & 1);
+                if (j > i) { let tr = re[i], ti = im[i]; re[i] = re[j]; im[i] = im[j]; re[j] = tr; im[j] = ti; }
+            }
+            for (let size = 2; size <= n; size *= 2) {
+                const half = size / 2; const theta = -2 * Math.PI / size; const wpr = Math.cos(theta), wpi = Math.sin(theta);
+                for (let i = 0; i < n; i += size) {
+                    let wr = 1, wi = 0;
+                    for (let j = 0; j < half; j++) {
+                        const k = i + j, l = k + half;
+                        const tr = wr * re[l] - wi * im[l];
+                        const ti = wr * im[l] + wi * re[l];
+                        re[l] = re[k] - tr; im[l] = im[k] - ti;
+                        re[k] += tr; im[k] += ti;
+                        const nxt = wr * wpr - wi * wpi; wi = wr * wpi + wi * wpr; wr = nxt;
+                    }
+                }
+            }
+            return { re, im };
+        }
+
+        function computeSigmaPosition(re, im) {
+            let norm = 0, mean = 0;
+            for (let i = 0; i < N; i++) { const p = (re[i] * re[i] + im[i] * im[i]); norm += p; mean += xGrid[i] * p; }
+            mean /= norm;
+            let varr = 0;
+            for (let i = 0; i < N; i++) { const p = (re[i] * re[i] + im[i] * im[i]); varr += (xGrid[i] - mean) * (xGrid[i] - mean) * p; }
+            varr /= norm; return Math.sqrt(varr);
+        }
+
+        function computeMomentumStdFromFFT(reF, imF, hbarVal) {
+            const L = XMAX - XMIN; const dk = 2 * Math.PI / L; const half = N / 2;
+            let norm = 0, mean = 0;
+            for (let i = 0; i < N; i++) { const idx = (i + half) % N; const mag = reF[idx] * reF[idx] + imF[idx] * imF[idx]; const k = (i - half) * dk; norm += mag; mean += k * mag; }
+            mean /= norm; let varr = 0; for (let i = 0; i < N; i++) { const idx = (i + half) % N; const mag = reF[idx] * reF[idx] + imF[idx] * imF[idx]; const k = (i - half) * dk; varr += (k - mean) * (k - mean) * mag; }
+            varr /= norm; const sigma_k = Math.sqrt(varr); return { sigma_k, sigma_p: hbarVal * sigma_k };
+        }
+
+        // animation control
+        let running = true;
+        pauseBtn.addEventListener('click', () => { running = false; });
+        resumeBtn.addEventListener('click', () => { running = true; lastTS = null; requestAnimationFrame(loop); });
+        resetBtn.addEventListener('click', () => {
+            x0.value = -4; x0num.value = -4; sigma.value = 0.35; sigmanum.value = 0.35; k0.value = 8; k0num.value = 8; aperture.value = 1; apernum.value = 1; photonIntensity.value = 0.7; phnum.value = 0.7; hbar.value = 1; hbarnum.value = 1;
+        });
+
+        // allow immediate visual feedback when dragging
+        ['input', 'change'].forEach(evt => {
+            [x0, sigma, k0, aperture, photonIntensity, hbar].forEach(el => el.addEventListener(evt, () => { }));
+        });
+
+        // animation loop
+        let lastTS = null; let photonPhase = 0;
+        function loop(ts) {
+            if (!running) return; if (!lastTS) lastTS = ts; const dt = (ts - lastTS) / 1000; lastTS = ts; photonPhase += dt * 6.0; render(photonPhase);
+            requestAnimationFrame(loop);
+        }
+
+        // main render: compute wave -> apply aperture -> FFT -> draw
+        function render(photonPhase) {
+            // read UI values
+            const x0v = parseFloat(x0.value);
+            const s0 = Math.max(0.01, parseFloat(sigma.value));
+            const k0v = parseFloat(k0.value);
+            const a = Math.max(0.01, parseFloat(aperture.value));
+            const phI = parseFloat(photonIntensity.value);
+            const hbarVal = Math.max(1e-6, parseFloat(hbar.value));
+
+            // build wave on grid
+            const re = new Float64Array(N); const im = new Float64Array(N);
+            for (let i = 0; i < N; i++) { const g = gaussianComplex(xGrid[i], x0v, s0, k0v); re[i] = g.re; im[i] = g.im; }
+            // normalize (integral) -> discrete sum * dx
+            let norm = 0; for (let i = 0; i < N; i++) norm += (re[i] * re[i] + im[i] * im[i]) * dx; const nf = Math.sqrt(norm); for (let i = 0; i < N; i++) { re[i] /= nf; im[i] /= nf; }
+
+            // apply aperture (rect centered at x=0)
+            const windowRe = new Float64Array(N); const windowIm = new Float64Array(N); const halfA = a / 2;
+            for (let i = 0; i < N; i++) { if (Math.abs(xGrid[i]) <= halfA) { windowRe[i] = re[i]; windowIm[i] = im[i]; } else { windowRe[i] = 0; windowIm[i] = 0; } }
+
+            // compute sigma_x of transmitted
+            const sigmaX = computeSigmaPosition(windowRe, windowIm);
+
+            // FFT of transmitted wave
+            const reF = new Float64Array(windowRe); const imF = new Float64Array(windowIm);
+            const fftRes = fft(reF, imF);
+            for (let i = 0; i < N; i++) { fftRes.re[i] *= dx; fftRes.im[i] *= dx; }
+            const mom = computeMomentumStdFromFFT(fftRes.re, fftRes.im, hbarVal);
+
+            // draw everything
+            const W = simCanvas.width, H = simCanvas.height; sCtx.clearRect(0, 0, W, H);
+            sCtx.fillStyle = 'rgba(255,255,255,0.02)'; sCtx.fillRect(0, 0, W, H);
+
+            // top: photons rays
+            const topH = 100; sCtx.save(); sCtx.globalAlpha = phI;
+            for (let i = -7; i <= 7; i++) {
+                const offset = (i / 14); const x = W * (0.5 + offset * 0.6);
+                const wob = Math.sin(photonPhase * 2 + i) * 6;
+                sCtx.beginPath(); sCtx.moveTo(x + wob, 8); sCtx.quadraticCurveTo(W * 0.5, topH * 0.55, W * 0.5, topH - 12); sCtx.strokeStyle = 'rgba(255,220,150,0.9)'; sCtx.lineWidth = 1.2; sCtx.stroke();
+            }
+            sCtx.restore();
+
+            // aperture
+            const centerX = W / 2; const aperturePixelWidth = Math.max(2, (a / (XMAX - XMIN)) * W);
+            const apertureLeft = centerX - aperturePixelWidth / 2; const apertureRight = centerX + aperturePixelWidth / 2;
+            sCtx.fillStyle = 'rgba(20,30,40,0.95)'; sCtx.fillRect(centerX - 6, 30, 12, topH + 10);
+            sCtx.clearRect(apertureLeft, 36, aperturePixelWidth, topH + 4);
+            sCtx.strokeStyle = 'rgba(255,255,255,0.06)'; sCtx.strokeRect(apertureLeft, 36, aperturePixelWidth, topH + 4);
+            sCtx.fillStyle = '#9fb0c9'; sCtx.font = '12px monospace'; sCtx.fillText('Aperture a = ' + a.toFixed(3), centerX - 60, 30);
+
+            // middle: wave at aperture plane
+            const midY = topH + 30; const bandH = 140;
+            // compute densities for transmitted wave
+            const densTrans = new Float64Array(N); let maxT = 0; for (let i = 0; i < N; i++) { densTrans[i] = windowRe[i] * windowRe[i] + windowIm[i] * windowIm[i]; if (densTrans[i] > maxT) maxT = densTrans[i]; }
+            sCtx.save(); sCtx.translate(0, midY);
+            sCtx.beginPath();
+            for (let i = 0; i < N; i++) { const px = (i / N) * W; const py = bandH - (densTrans[i] / (maxT || 1)) * (bandH * 0.95); if (i === 0) sCtx.moveTo(px, py); else sCtx.lineTo(px, py); }
+            sCtx.strokeStyle = '#60a5fa'; sCtx.lineWidth = 1.6; sCtx.stroke();
+            sCtx.fillStyle = '#9fb0c9'; sCtx.font = '12px monospace'; sCtx.fillText('Electron wave at aperture plane (transmitted)', 10, -8);
+            // draw aperture marker
+            sCtx.fillStyle = 'rgba(255,255,255,0.06)'; sCtx.fillRect(apertureLeft, -6, 2, bandH + 12); sCtx.fillRect(apertureRight - 2, -6, 2, bandH + 12);
+            sCtx.restore();
+
+            // bottom: momentum distribution
+            const botY = midY + bandH + 16; const botH = 130;
+            // compute mags from fftRes
+            let maxMag = 0; const mags = new Float64Array(N);
+            for (let i = 0; i < N; i++) { const idx = (i + N / 2) % N; const mag = fftRes.re[idx] * fftRes.re[idx] + fftRes.im[idx] * fftRes.im[idx]; mags[i] = mag; if (mag > maxMag) maxMag = mag; }
+            sCtx.save(); sCtx.translate(0, botY);
+            sCtx.beginPath();
+            for (let i = 0; i < N; i++) { const px = (i / N) * W; const py = botH - (mags[i] / (maxMag || 1)) * (botH * 0.95); if (i === 0) sCtx.moveTo(px, py); else sCtx.lineTo(px, py); }
+            sCtx.strokeStyle = '#34d399'; sCtx.lineWidth = 1.6; sCtx.stroke();
+            sCtx.fillStyle = '#9fb0c9'; sCtx.font = '12px monospace'; sCtx.fillText('Momentum distribution |φ(p)|² (bottom). Narrower slit → broader distribution.', 10, -8);
+            sCtx.restore();
+
+            // update stats
+            dxEl.textContent = sigmaX.toFixed(5);
+            dpEl.textContent = mom.sigma_p.toFixed(5);
+            prodEl.textContent = (sigmaX * mom.sigma_p).toFixed(5);
+        }
+
+        // start animation
+        requestAnimationFrame(loop);
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | Quantum Simulation Lab</title>
+    <meta name="description"
+        content="Learn about the Sri Ramachandra Faculty of Engineering and Technology (SRET) physics simulation platform.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        .about-section {
+            padding: 120px 0 80px;
+            min-height: 80vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .about-content h1 {
+            font-size: 3.5rem;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+
+        .about-text {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .about-text p {
+            margin-bottom: 24px;
+        }
+
+        .about-image {
+            position: relative;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+            background: var(--bg-card);
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .about-image::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, var(--primary-glow), transparent 70%);
+            opacity: 0.2;
+        }
+
+        .sret-logo-large {
+            width: 80%;
+            height: auto;
+            filter: drop-shadow(0 0 30px var(--primary-glow));
+            z-index: 1;
+        }
+
+        @media (max-width: 968px) {
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .about-content h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <img src="imgs/Logo-sret.png" alt="QuantumLab Logo" style="height: 50px; width: auto;">
+            </a>
+
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="simulations.html" class="nav-link">Simulations</a>
+                <a href="about.html" class="nav-link active">About</a>
+                <a href="#research" class="nav-link">Research</a>
+            </div>
+
+            <div class="nav-actions">
+                <button class="btn-icon search-btn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2" />
+                        <path d="M14 14L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- About Section -->
+    <section class="about-section">
+        <div class="hero-background">
+            <div class="quantum-grid"></div>
+            <div class="particle particle-1"></div>
+            <div class="particle particle-2"></div>
+        </div>
+
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-content">
+                    <div class="hero-badge">
+                        <span class="badge-dot"></span>
+                        <span>Our Mission</span>
+                    </div>
+                    <h1>About <span class="gradient-text">Us</span></h1>
+                    <div class="about-text">
+                        <p>
+                            This platform presents a curated collection of physics simulation projects developed by
+                            students of Sri Ramachandra Faculty of Engineering and Technology (SRET). The projects
+                            showcased here are the result of hands-on laboratory work and academic exploration, where
+                            core physics principles are transformed into interactive, web-based simulations.
+                        </p>
+                        <p>
+                            At SRET, physics education is strongly supported by well-equipped and advanced physics
+                            laboratories, enabling students to experimentally and computationally explore concepts
+                            across quantum mechanics, optics, particle physics, and spectroscopy. These facilities
+                            provide an environment where theoretical understanding is reinforced through practical
+                            implementation.
+                        </p>
+                        <p>
+                            The simulations featured on this website reflect the students’ ability to apply physics
+                            concepts using programming, visualization, and analytical reasoning. Each project
+                            demonstrates a practical approach to learning physics by modeling real phenomena and making
+                            complex ideas accessible through interactive experimentation.
+                        </p>
+                        <p>
+                            This platform serves as a digital showcase of student-driven physics innovation,
+                            highlighting the academic rigor, laboratory excellence, and experiential learning culture
+                            fostered at Sri Ramachandra Faculty of Engineering and Technology.
+                        </p>
+                    </div>
+                </div>
+                <div class="about-image">
+                    <img src="imgs/Logo-sret.png" alt="SRET Logo" class="sret-logo-large">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="imgs/Logo-sret.png" alt="QuantumLab Logo"
+                        style="height: 60px; width: auto; opacity: 0.9;">
+                </div>
+                <p class="footer-tagline">Advancing quantum education through interactive simulation</p>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="#privacy">Privacy</a>
+                    <a href="#terms">Terms</a>
+                    <a href="#contact">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

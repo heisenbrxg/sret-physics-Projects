@@ -1,0 +1,1763 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Photoelectric Effect — Expo Simulation</title>
+    <style>
+        :root {
+            --bg: #2c0047;
+            /* dark purple */
+            --panel: #111827;
+            --ink: #e5e7eb;
+            --muted: #94a3b8;
+            --accent: #22d3ee;
+            --accent2: #a78bfa;
+            --ok: #86efac;
+            --warn: #fca5a5;
+            --wire: #1f2937;
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #1a0030, #2c0047 20%, #2c0047 80%, #1a0030);
+            color: var(--ink);
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial
+        }
+
+        h1 {
+            font-size: clamp(22px, 3.2vw, 36px);
+            margin: 14px 0 6px 0;
+            text-align: center
+        }
+
+        .sub {
+            color: var(--muted);
+            text-align: center;
+            margin-bottom: 16px
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1.1fr .9fr;
+            gap: 16px
+        }
+
+        @media (max-width: 980px) {
+            .wrap {
+                grid-template-columns: 1fr
+            }
+        }
+
+        /* increase overall page width a bit to give more room for graphs */
+        @media (min-width:1400px) {
+            .wrap {
+                max-width: 1400px
+            }
+        }
+
+        .card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .02));
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .35)
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin: 0;
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, .07)
+        }
+
+        .card .body {
+            padding: 14px
+        }
+
+        /* Apparatus canvas area */
+        #apparatus {
+            width: 100%;
+            height: 430px;
+            background: #1a0030;
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 14px;
+            position: relative
+        }
+
+        /* subtle in-place label for the vacuum medium inside the tube */
+        .vacuum-medium {
+            position: absolute;
+            left: 350px;
+            /* centered over the tube interior (matches drawing coords) */
+            top: 86px;
+            /* just inside the top area of the tube */
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.30);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.6px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            pointer-events: none;
+            z-index: 65;
+            backdrop-filter: blur(2px);
+        }
+
+        /* Tooltip */
+        #tooltip {
+            position: fixed;
+            /* use fixed so it follows viewport */
+            pointer-events: none;
+            background: rgba(181, 128, 255, 0.96);
+            color: #fff;
+            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        /* Control panel */
+        .controls .row {
+            margin-bottom: 14px
+        }
+
+        .controls label {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 6px
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--accent)
+        }
+
+        select,
+        .toggle {
+            background: rgba(0, 0, 0, .25);
+            color: var(--ink);
+            border: 1px solid rgba(255, 255, 255, .12);
+            border-radius: 10px;
+            padding: 8px 10px
+        }
+
+        .toggles {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .toggles label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 999px;
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px
+        }
+
+        @media (max-width:720px) {
+            .two-col {
+                grid-template-columns: 1fr
+            }
+        }
+
+        /* Spectrum slider look */
+        .spectrum-track {
+            height: 12px;
+            border-radius: 999px;
+            background:
+                linear-gradient(90deg,
+                    #a64cff 0%, #6c63ff 12%,
+                    #2dd4ff 24%, #22d3ee 30%,
+                    #34d399 38%, #a3e635 46%,
+                    #facc15 58%, #fb923c 72%,
+                    #f43f5e 86%, #d946ef 94%);
+            position: relative;
+            margin: 6px 0 4px 0;
+            border: 1px solid rgba(255, 255, 255, .18);
+        }
+
+        .spectrum-legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--muted)
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .08);
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 8px
+        }
+
+        @media (min-width:880px) {
+            .stats {
+                grid-template-columns: repeat(4, 1fr)
+            }
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 12px;
+            padding: 10px
+        }
+
+        .stat .k {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .stat .v {
+            font-size: 18px;
+            font-weight: 800
+        }
+
+        /* Graph area */
+        #graph {
+            width: 100%;
+            height: 420px;
+            background: #1a0030;
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 14px
+        }
+
+        .graph-toggles {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px
+        }
+
+        .graph-toggles label {
+            cursor: pointer
+        }
+
+        .legend {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px
+        }
+
+        .note {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px
+        }
+    </style>
+</head>
+
+<body>
+    <h1>⚡ Photoelectric Effect — Interactive Simulation</h1>
+    <div class="sub">Lamp → metal cathode → electrons → galvanometer. Toggle graphs & photons, sweep wavelength (UV →
+        IR), intensity, and optional battery for I–V (current–voltage).</div>
+
+    <div class="wrap">
+        <!-- Left: Apparatus + controls -->
+        <div class="card">
+            <h2>Apparatus</h2>
+            <div class="body" style="position:relative">
+                <canvas id="apparatus" width="700" height="430"></canvas>
+                <div class="vacuum-medium" aria-hidden="true">vacuum medium</div>
+                <div id="tooltip"></div>
+
+                <div class="controls" style="margin-top:12px">
+                    <div class="two-col">
+                        <div class="row">
+                            <label>Metal (work function φ in eV)</label>
+                            <div id="metalList"
+                                style="display:flex;flex-direction:column;gap:6px;max-height:170px;overflow:auto;padding-right:6px">
+                                <label><input type="checkbox" value="Na|2.28" checked> Sodium (Na) — 2.28 eV</label>
+                                <label><input type="checkbox" value="K|2.30"> Potassium (K) — 2.30 eV</label>
+                                <label><input type="checkbox" value="Ca|2.87"> Calcium (Ca) — 2.87 eV</label>
+                                <label><input type="checkbox" value="Zn|4.30"> Zinc (Zn) — 4.30 eV</label>
+                                <label><input type="checkbox" value="Cu|4.70"> Copper (Cu) — 4.70 eV</label>
+                                <label><input type="checkbox" value="Ag|4.26"> Silver (Ag) — 4.26 eV</label>
+                                <label><input type="checkbox" value="Cs|1.95"> Cesium (Cs) — 1.95 eV</label>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <label>Intensity (%): <span id="intensityLabel">60</span>%</label>
+                            <input type="range" id="intensity" min="0" max="100" value="60" step="1" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label>Wavelength λ (nm): <span id="lambdaLabel">400</span> nm</label>
+                        <div class="spectrum-track"></div>
+                        <input type="range" id="wavelength" min="200" max="800" value="400" step="1" />
+                        <div class="spectrum-legend">
+                            <span>UV</span><span>Violet</span><span>Blue</span><span>Green</span><span>Yellow</span><span>Orange</span><span>Red</span><span>IR</span>
+                        </div>
+                    </div>
+
+                    <div class="two-col">
+                        <div class="row">
+                            <label>Bias / Stopping Voltage V (volts): <span id="biasLabel">0.00</span> V</label>
+                            <input type="range" id="bias" min="-5" max="5" value="0" step="0.01" />
+                            <div class="note">Use for I–V tests. Positive V opposes electrons; at V = V_s, current → 0.
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <label>Options</label>
+                            <div class="toggles">
+                                <label><input type="checkbox" id="showPhotons" checked> Show photons</label>
+                                <label><input type="checkbox" id="showBattery"> Show battery (for I–V)</label>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <label>Lamp horizontal offset (px): <span id="lampOffsetLabel">120</span></label>
+                            <input type="range" id="lampOffset" min="-60" max="220" value="120" step="1" />
+                        </div>
+                        <div class="row">
+                            <label>IV sharpness (lower = sharper cutoff)</label>
+                            <input type="range" id="ivSharp" min="0.02" max="0.5" step="0.01" value="0.08" />
+                            <div style="font-size:12px;color:var(--muted);margin-top:6px">Adjust to match the textbook
+                                I–V cutoff sharpness.</div>
+                        </div>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="k">Metal φ (eV)</div>
+                            <div class="v" id="phiOut">2.28</div>
+                        </div>
+                        <div class="stat">
+                            <div class="k">Frequency (THz)</div>
+                            <div class="v" id="freqOut">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="k">Photon Energy (eV)</div>
+                            <div class="v" id="EphOut">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="k">Threshold λ0 (nm)</div>
+                            <div class="v" id="lambda0Out">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="k">Kmax (eV)</div>
+                            <div class="v" id="KmaxOut">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="k">Stopping Vs (V)</div>
+                            <div class="v" id="VsOut">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="k">Current (amp)</div>
+                            <div class="v" id="IOut">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="k">Emission?</div>
+                            <div class="v" id="emitOut">No</div>
+                        </div>
+                    </div>
+                    <div id="metalStats" style="margin-top:10px;display:grid;grid-template-columns:1fr;gap:8px"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Graphs -->
+        <div class="card">
+            <h2>Graphs</h2>
+            <div class="body">
+                <!-- Show all graphs simultaneously (real-time) -->
+                <style>
+                    /* Stack three large, equal graphs vertically so they read as clear rectangles */
+                    .graph-grid {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                        grid-auto-rows: 1fr;
+                        gap: 12px;
+                        margin-bottom: 8px
+                    }
+
+                    .mini-graph {
+                        background: #0f1020;
+                        border-radius: 10px;
+                        padding: 12px;
+                        border: 1px solid rgba(255, 255, 255, .06);
+                        display: flex;
+                        flex-direction: column
+                    }
+
+                    /* larger canvases for clearer labels */
+                    .mini-graph canvas {
+                        width: 100%;
+                        height: 300px;
+                        display: block;
+                        border-radius: 6px;
+                        flex: 0 0 auto
+                    }
+
+                    .mini-graph h3 {
+                        font-size: 14px;
+                        margin: 4px 6px 8px;
+                        color: var(--muted);
+                        font-weight: 600
+                    }
+
+                    @media (max-width:900px) {
+                        .graph-grid {
+                            grid-template-columns: 1fr
+                        }
+
+                        .mini-graph canvas {
+                            height: 220px
+                        }
+                    }
+                </style>
+                <div class="graph-grid">
+                    <div class="mini-graph">
+                        <h3>I vs V (photocurrent vs bias)</h3><canvas id="graphIV"></canvas>
+                    </div>
+                    <div class="mini-graph">
+                        <h3>K_max vs Frequency (linear, threshold f₀)</h3><canvas id="graphKfreq"></canvas>
+                    </div>
+                    <div class="mini-graph">
+                        <h3>Photocurrent vs Intensity (I ∝ intensity)</h3><canvas id="graphIInt"></canvas>
+                    </div>
+                </div>
+                <div class="legend">
+                    <span class="pill">Dashed lines: thresholds / stopping potential</span>
+                    <span class="pill">Kinetic energy K = hf − φ (linearly increasing above f₀)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ===== Physics ===== */
+        const h_eVs = 4.135667696e-15; // Planck (eV*s)
+        const c = 2.99792458e8;        // m/s
+        const eC = 1.602176634e-19;    // C (not needed for eV→V since 1 eV = 1 V * e)
+        const J_to_eV = 1 / eC;
+
+        /* ===== Elements ===== */
+        const canvas = document.getElementById('apparatus');
+        const ctx = canvas.getContext('2d');
+        // three separate graphs (real-time)
+        const graphIV = document.getElementById('graphIV');
+        const gIV = graphIV.getContext('2d');
+        const graphIInt = document.getElementById('graphIInt');
+        const gIInt = graphIInt.getContext('2d');
+        const graphKfreq = document.getElementById('graphKfreq');
+        const gKfreq = graphKfreq.getContext('2d');
+
+        // Resize canvases for crisp rendering on high-DPI displays
+        function ensureHiDPICanvas(canvas, ctx) {
+            const dpr = Math.max(1, window.devicePixelRatio || 1);
+            // use clientWidth / clientHeight (CSS pixels) to compute backing store size
+            const cssW = canvas.clientWidth || 320;
+            const cssH = canvas.clientHeight || 220;
+            const w = Math.max(2, Math.floor(cssW * dpr));
+            const h = Math.max(2, Math.floor(cssH * dpr));
+            if (canvas.width !== w || canvas.height !== h) {
+                canvas.width = w; canvas.height = h;
+                // use CSS pixels for drawing commands
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+        }
+
+        // metal list container (checkboxes)
+        const metalListEl = document.getElementById('metalList');
+        const wavelengthEl = document.getElementById('wavelength');
+        const intensityEl = document.getElementById('intensity');
+        const biasEl = document.getElementById('bias');
+        const showPhotonsEl = document.getElementById('showPhotons');
+        const showBatteryEl = document.getElementById('showBattery');
+
+        // lamp offset control (added slider)
+        const lampOffsetEl = document.getElementById('lampOffset');
+        const lampOffsetLabel = document.getElementById('lampOffsetLabel');
+
+        const lambdaLabel = document.getElementById('lambdaLabel');
+        const intensityLabel = document.getElementById('intensityLabel');
+        const biasLabel = document.getElementById('biasLabel');
+
+        const phiOut = document.getElementById('phiOut');
+        const freqOut = document.getElementById('freqOut');
+        const EphOut = document.getElementById('EphOut');
+        const lambda0Out = document.getElementById('lambda0Out');
+        const KmaxOut = document.getElementById('KmaxOut');
+        const VsOut = document.getElementById('VsOut');
+        const IOut = document.getElementById('IOut');
+        const emitOut = document.getElementById('emitOut');
+
+        /* ===== Tooltip element ===== */
+        const tooltip = document.getElementById('tooltip');
+
+        /* ===== State ===== */
+        let photons = [];
+        let flashes = []; // impact flashes when photons hit the cathode
+        let lastTime = performance.now();
+        let lampOffset = Number(lampOffsetEl ? lampOffsetEl.value : 120);
+
+        /* ===== Helpers ===== */
+        function fmt(x, d = 2) { return Number(x).toFixed(d); }
+
+        function getSelectedMetals() {
+            // read checked checkboxes in #metalList and return array of {id,name,phi}
+            const els = metalListEl ? Array.from(metalListEl.querySelectorAll('input[type=checkbox]')) : [];
+            const checked = els.filter(i => i.checked);
+            const boxes = checked.length ? checked : els.filter((_, i) => i === 0 ? true : false); // fallback to first if none
+            return boxes.map(inp => {
+                const v = inp.value || '';
+                const parts = v.split('|');
+                const phi = Number(parts[1] || 0);
+                const label = inp.parentElement ? inp.parentElement.textContent : (parts[0] || inp.value);
+                const name = (label || '').split('—')[0].trim();
+                return { id: parts[0] || inp.value, name: name || label, phi };
+            });
+        }
+
+        // backward compatible single-metal getter (returns phi of first selected)
+        function metalPhi() { const s = getSelectedMetals(); return s.length ? s[0].phi : 0; }
+
+        // palette for multiple metal curves
+        const metalColors = ['#ff6b6b', '#f59e0b', '#34d399', '#22d3ee', '#8b5cf6', '#ef4fa0', '#ffd27a', '#60a5fa'];
+        function ephFromLambda_nm(lambda_nm) {
+            const f = c / (lambda_nm * 1e-9);
+            return { f_Hz: f, Eph_eV: h_eVs * f };
+        }
+        function physics(lambda_nm, intensity_rel, bias_V, phi_eV) {
+            const { f_Hz, Eph_eV } = ephFromLambda_nm(lambda_nm);
+            const Kmax_eV = Math.max(0, Eph_eV - phi_eV);
+            const Vs = Kmax_eV; // 1 eV -> 1 V for single electron charge
+            const emitted = Eph_eV >= phi_eV;
+
+            // simple current model
+            const I0 = emitted ? intensity_rel : 0;
+            // bias effect: positive V opposes
+            const oppose = Math.max(0, bias_V);
+            const I = emitted ? Math.max(0, I0 * (1 - (Vs > 0 ? oppose / Vs : 1))) : 0;
+            // slight boost for negative V (collection)
+            const boost = bias_V < 0 ? 1 + Math.min(0.5, Math.abs(bias_V) / 5) : 1;
+            const Ieff = I * boost;
+
+            const lambda0_nm = (h_eVs * c / (phi_eV)) * 1e9;
+            return { f_Hz, Eph_eV, Kmax_eV, Vs, emitted, current: Ieff, lambda0_nm };
+        }
+
+        /* ===== Apparatus drawing ===== */
+        function drawLamp(cx, cy) {
+            // bulb
+            const grd = ctx.createRadialGradient(cx, cy, 4, cx, cy, 26);
+            grd.addColorStop(0, 'rgba(255,235,140,1)');
+            grd.addColorStop(1, 'rgba(255,200,80,0.2)');
+            ctx.fillStyle = grd;
+            ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI * 2); ctx.fill();
+
+            // base
+            ctx.fillStyle = '#9ca3af';
+            ctx.fillRect(cx - 10, cy + 26, 20, 18);
+            ctx.fillStyle = '#6b7280';
+            ctx.fillRect(cx - 14, cy + 44, 28, 10);
+        }
+
+        function drawTube(x, y, w, h) {
+            // glass (more pronounced glassy look)
+            // outer rim
+            ctx.save();
+            ctx.lineWidth = 3.2;
+            const rimGr = ctx.createLinearGradient(x, y, x + w, y + h);
+            rimGr.addColorStop(0, 'rgba(255,255,255,0.14)');
+            rimGr.addColorStop(0.5, 'rgba(180,210,230,0.06)');
+            rimGr.addColorStop(1, 'rgba(255,255,255,0.06)');
+            ctx.strokeStyle = rimGr;
+            ctx.fillStyle = 'rgba(70,110,150,0.12)'; // cool-blue glass tint
+            roundRect(ctx, x, y, w, h, 16, true, true);
+
+            // inner glass tint / soft reflection
+            ctx.globalCompositeOperation = 'lighter';
+            const innerGr = ctx.createLinearGradient(x, y, x + w, y + h);
+            innerGr.addColorStop(0, 'rgba(140,180,220,0.04)');
+            innerGr.addColorStop(0.5, 'rgba(120,160,200,0.02)');
+            innerGr.addColorStop(1, 'rgba(140,180,220,0.03)');
+            ctx.fillStyle = innerGr;
+            roundRect(ctx, x + 6, y + 6, w - 12, h - 12, 12, true, false);
+            ctx.globalCompositeOperation = 'source-over';
+
+            // subtle specular streaks to read as glass
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x + 12, y + 18); ctx.quadraticCurveTo(x + w / 2, y + 6, x + w - 12, y + 22); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + 20, y + 36); ctx.quadraticCurveTo(x + w / 2, y + 28, x + w - 20, y + 40); ctx.stroke();
+            ctx.restore();
+
+            // plates (metallic look)
+            // cathode (left) - cool steel/blue metallic
+            const cathX = x + 40, cathY = y + 30, cathW = 14, cathH = h - 60;
+            const catGr = ctx.createLinearGradient(cathX, cathY, cathX + cathW, cathY + cathH);
+            catGr.addColorStop(0, '#e6f3ff');
+            catGr.addColorStop(0.4, '#9fbfe9');
+            catGr.addColorStop(1, '#6b9ad6');
+            ctx.fillStyle = catGr;
+            ctx.fillRect(cathX, cathY, cathW, cathH);
+            // subtle bevel/highlight
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+            ctx.strokeRect(cathX + 0.5, cathY + 0.5, cathW - 1, cathH - 1);
+            // gentle cool glow around cathode
+            ctx.save(); ctx.globalCompositeOperation = 'lighter';
+            const glowC = ctx.createRadialGradient(cathX + cathW / 2, cathY + cathH / 2, 0, cathX + cathW / 2, cathY + cathH / 2, cathH * 0.9);
+            glowC.addColorStop(0, 'rgba(110,160,230,0.08)');
+            glowC.addColorStop(1, 'rgba(110,160,230,0)');
+            ctx.fillStyle = glowC; ctx.beginPath(); ctx.arc(cathX + cathW / 2, cathY + cathH / 2, cathH * 0.85, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+
+            // anode (right) - warm brass/copper metallic
+            const anoX = x + w - 54, anoY = y + 30, anoW = 14, anoH = h - 60;
+            const anGr = ctx.createLinearGradient(anoX, anoY, anoX + anoW, anoY + anoH);
+            anGr.addColorStop(0, '#fff0d6');
+            anGr.addColorStop(0.5, '#ffbf6b');
+            anGr.addColorStop(1, '#b86b14');
+            ctx.fillStyle = anGr;
+            ctx.fillRect(anoX, anoY, anoW, anoH);
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+            ctx.strokeRect(anoX + 0.5, anoY + 0.5, anoW - 1, anoH - 1);
+            // warm glow for anode
+            ctx.save(); ctx.globalCompositeOperation = 'lighter';
+            const glowA = ctx.createRadialGradient(anoX + anoW / 2, anoY + anoH / 2, 0, anoX + anoW / 2, anoY + anoH / 2, anoH * 0.9);
+            glowA.addColorStop(0, 'rgba(255,190,100,0.07)');
+            glowA.addColorStop(1, 'rgba(255,190,100,0)');
+            ctx.fillStyle = glowA; ctx.beginPath(); ctx.arc(anoX + anoW / 2, anoY + anoH / 2, anoH * 0.85, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+
+        function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+            if (w < 2 * r) r = w / 2; if (h < 2 * r) r = h / 2;
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+        }
+
+        function drawWirePath(points) {
+            // metallic wire with subtle gradient along its path
+            if (points.length < 2) return;
+            const p0 = points[0], p1 = points[points.length - 1];
+            const grad = ctx.createLinearGradient(p0.x, p0.y, p1.x, p1.y);
+            grad.addColorStop(0, '#26323b');
+            grad.addColorStop(0.5, '#475766');
+            grad.addColorStop(1, '#26323b');
+            // primary wire stroke
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) { ctx.lineTo(points[i].x, points[i].y); }
+            ctx.stroke();
+            // very subtle highlight (single faint line) to suggest metallic sheen
+            ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 0.9;
+            ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) { ctx.lineTo(points[i].x, points[i].y); }
+            ctx.stroke();
+            // soft, low-intensity glow to avoid a second strong line-like structure
+            ctx.save(); ctx.globalCompositeOperation = 'lighter';
+            ctx.strokeStyle = 'rgba(100,150,200,0.015)'; ctx.lineWidth = 10;
+            ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) { ctx.lineTo(points[i].x, points[i].y); }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawBattery(x, y) {
+            // two plates - metallic rendering
+            const plateGr = ctx.createLinearGradient(x, y - 20, x + 20, y + 20);
+            plateGr.addColorStop(0, '#dde6ea');
+            plateGr.addColorStop(0.6, '#9aa6ad');
+            plateGr.addColorStop(1, '#e6eef3');
+            ctx.fillStyle = plateGr;
+            ctx.fillRect(x, y - 20, 6, 40);
+            ctx.fillRect(x + 14, y - 12, 6, 24);
+            // subtle plate edges
+            ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 0.8;
+            ctx.strokeRect(x + 0.5, y - 20 + 0.5, 6 - 1, 40 - 1);
+            ctx.strokeRect(x + 14.5, y - 12 + 0.5, 6 - 1, 24 - 1);
+            // labels
+            ctx.fillStyle = 'rgba(255,255,255,.85)';
+            ctx.font = '12px system-ui';
+            ctx.fillText('+', x + 20, y - 18);
+            ctx.fillText('-', x - 6, y - 18);
+        }
+
+        function drawGalvanometer(x, y, r, needleAngle) {
+            // polished metallic galvanometer with glass cover, needle gradient and pivot
+            ctx.save();
+            // outer case (metal)
+            const caseGr = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
+            caseGr.addColorStop(0, '#11161b');
+            caseGr.addColorStop(0.5, '#121821');
+            caseGr.addColorStop(1, '#0b1014');
+            ctx.fillStyle = caseGr;
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+            // thin chrome rim
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2; ctx.stroke();
+
+            // glass face
+            ctx.beginPath(); ctx.arc(x, y, r * 0.92, 0, Math.PI * 2); ctx.closePath();
+            const glass = ctx.createRadialGradient(x - r * 0.2, y - r * 0.35, r * 0.05, x, y, r * 0.92);
+            glass.addColorStop(0, 'rgba(255,255,255,0.22)');
+            glass.addColorStop(0.12, 'rgba(255,255,255,0.08)');
+            glass.addColorStop(0.8, 'rgba(255,255,255,0.01)');
+            glass.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = 'rgba(255,255,255,0.02)'; ctx.fill();
+            ctx.fillStyle = glass; ctx.globalCompositeOperation = 'lighter'; ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+
+            // dial background
+            ctx.save();
+            ctx.beginPath(); ctx.arc(x, y, r * 0.78, 0, Math.PI * 2); ctx.clip();
+            const dialGr = ctx.createLinearGradient(x, y - r * 0.7, x, y + r * 0.6);
+            dialGr.addColorStop(0, '#0b1220'); dialGr.addColorStop(1, '#081018');
+            ctx.fillStyle = dialGr; ctx.fillRect(x - r * 0.8, y - r * 0.8, r * 1.6, r * 1.6);
+            ctx.restore();
+
+            // ticks and subtle graduations
+            ctx.strokeStyle = 'rgba(255,255,255,0.16)'; ctx.lineWidth = 1;
+            for (let a = -70; a <= 70; a += 10) {
+                const rad = (a - 90) * Math.PI / 180;
+                const x1 = x + (r * 0.66) * Math.cos(rad);
+                const y1 = y + (r * 0.66) * Math.sin(rad);
+                const x2 = x + (r * 0.56) * Math.cos(rad);
+                const y2 = y + (r * 0.56) * Math.sin(rad);
+                ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            }
+            // minor ticks
+            ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 0.8;
+            for (let a = -70; a <= 70; a += 5) {
+                const rad = (a - 90) * Math.PI / 180;
+                const x1 = x + (r * 0.66) * Math.cos(rad);
+                const y1 = y + (r * 0.66) * Math.sin(rad);
+                const x2 = x + (r * 0.61) * Math.cos(rad);
+                const y2 = y + (r * 0.61) * Math.sin(rad);
+                ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            }
+
+            // needle with gradient (smooth)
+            const rad = (needleAngle - 90) * Math.PI / 180;
+            const nx = x + (r * 0.64) * Math.cos(rad);
+            const ny = y + (r * 0.64) * Math.sin(rad);
+            ctx.lineCap = 'round';
+            const needleGr = ctx.createLinearGradient(x, y, nx, ny);
+            needleGr.addColorStop(0, '#ff6b6b'); needleGr.addColorStop(0.6, '#ff3b30');
+            ctx.strokeStyle = needleGr; ctx.lineWidth = 3.2;
+            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(nx, ny); ctx.stroke();
+
+            // needle core (thin inner highlight)
+            ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 0.8;
+            ctx.beginPath(); ctx.moveTo(x + Math.cos(rad) * 6, y + Math.sin(rad) * 6); ctx.lineTo(nx, ny); ctx.stroke();
+
+            // pivot cap
+            ctx.beginPath(); ctx.fillStyle = '#222'; ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.arc(x, y, 2.2, 0, Math.PI * 2); ctx.fill();
+
+            // soft drop shadow under gauge
+            ctx.restore();
+            ctx.save(); ctx.globalCompositeOperation = 'destination-over';
+            ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(x, y + r * 0.9, r * 0.9, r * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+
+            // label
+            ctx.fillStyle = 'rgba(255,255,255,0.78)'; ctx.font = '11px system-ui'; ctx.fillText('Galvanometer', x - 44, y + r + 14);
+            ctx.restore();
+        }
+
+        /* ===== Photons animation (improved: lamp above cathode, glowing orbs falling to cathode) ===== */
+        function spawnPhotons(rate, color, startX, startY, spreadX, spreadY, speedPxPerSec, targetX, targetY, targetSpreadX = 0, targetSpreadY = 0) {
+            // rate [0..1] from intensity, spawn up to 4*rate per frame burst like before
+            const n = Math.floor(Math.max(0, rate) * 4);
+            for (let i = 0; i < n; i++) {
+                // jitter start within a small spread around lamp
+                const sx = startX + (Math.random() * spreadX - spreadX / 2);
+                const sy = startY + (Math.random() * spreadY - spreadY / 2);
+                // pick a randomized point near the target to create an extended/slanted hit region
+                const tx = targetX + (Math.random() * targetSpreadX - targetSpreadX / 2);
+                const ty = targetY + (Math.random() * targetSpreadY - targetSpreadY / 2);
+                // direction toward target (cathode area) with tiny angular jitter
+                const dx = (tx - sx);
+                const dy = (ty - sy);
+                const dist = Math.max(4, Math.hypot(dx, dy));
+                const nx = dx / dist;
+                const ny = dy / dist;
+                // very small angular jitter to keep photons mostly straight
+                const angleJitter = (Math.random() - 0.5) * 0.02;
+                const cosJ = Math.cos(angleJitter), sinJ = Math.sin(angleJitter);
+                const vx = (nx * cosJ - ny * sinJ) * speedPxPerSec;
+                const vy = (nx * sinJ + ny * cosJ) * speedPxPerSec;
+
+                photons.push({
+                    x: sx,
+                    y: sy,
+                    vx,
+                    vy,
+                    // shorter life so they don't linger
+                    life: 900 + Math.random() * 300,
+                    color,
+                    // smaller, less variance (less bubbly)
+                    size: 3 + Math.random() * 1.6
+                });
+            }
+        }
+
+        function updatePhotons(dt, cathode) {
+            const keep = [];
+            for (const p of photons) {
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.life -= dt * 1000;
+                // remove if hit cathode region (y passed cathode top) or life expired, or out of bounds
+                if (p.life > 0 && p.y < canvas.height && p.x > -50 && p.x < canvas.width + 50) {
+                    // if photon reached near cathode top area, create impact flash and drop it (it was absorbed)
+                    if (p.y >= cathode.y && p.y <= cathode.y + cathode.h + 6 && p.x >= cathode.x - 6 && p.x <= cathode.x + cathode.w + 6) {
+                        // record a short flash at the impact point
+                        flashes.push({ x: p.x, y: p.y, life: 220 + Math.random() * 120, maxLife: 220 + Math.random() * 120, color: p.color, size: 8 + Math.random() * 8 });
+                        // don't keep this photon (it's been absorbed)
+                    } else {
+                        keep.push(p);
+                    }
+                }
+            }
+            photons = keep;
+        }
+
+        function drawPhotons() {
+            const tNow = performance.now();
+            for (const p of photons) {
+                // soft glowing orb via radial gradient
+                const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 1.6);
+                g.addColorStop(0, hexToRGBA(p.color, 1));
+                g.addColorStop(0.28, hexToRGBA(p.color, 0.85));
+                g.addColorStop(0.6, hexToRGBA(p.color, 0.25));
+                g.addColorStop(1, hexToRGBA(p.color, 0));
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // subtle specular highlight (quieter than before)
+                const pulse = 0.45 + 0.5 * Math.abs(Math.sin((p.x * 0.06 + p.y * 0.02 + tNow * 0.005)));
+                ctx.fillStyle = `rgba(255,255,255,${0.10 * pulse})`;
+                ctx.beginPath();
+                ctx.arc(p.x - p.size * 0.28, p.y - p.size * 0.28, Math.max(0.8, p.size * 0.28), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawFlashes(dt_ms) {
+            if (!flashes || flashes.length === 0) return;
+            const keep = [];
+            for (const f of flashes) {
+                // fade based on life
+                const alpha = Math.max(0, Math.min(1, f.life / f.maxLife));
+                const grd = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.size * 2.8);
+                // make flashes smaller and subtler (elegant)
+                const r = Math.max(4, f.size * 0.6);
+                grd.addColorStop(0, hexToRGBA(f.color, 0.6 * alpha));
+                grd.addColorStop(0.35, hexToRGBA('#ffffff', 0.35 * alpha));
+                grd.addColorStop(1, hexToRGBA(f.color, 0));
+                ctx.fillStyle = grd;
+                ctx.beginPath(); ctx.arc(f.x, f.y, r * (1.0 + (1 - alpha) * 0.4), 0, Math.PI * 2); ctx.fill();
+
+                // very delicate spark edge
+                ctx.strokeStyle = `rgba(255,255,255,${0.045 * alpha})`;
+                ctx.lineWidth = 0.9;
+                ctx.beginPath(); ctx.arc(f.x, f.y, r * 0.9, 0, Math.PI * 2); ctx.stroke();
+
+                // decay life
+                f.life -= Math.max(16, dt_ms || 40);
+                if (f.life > 12) keep.push(f);
+            }
+            flashes = keep;
+        }
+
+        // helper: convert hex like "#fde047" or existing color str to rgba(r,g,b,a)
+        function hexToRGBA(hex, a = 1) {
+            // if already rgba or hsla or contains parentheses, return with alpha adjusted (best-effort)
+            if (hex.startsWith('rgba') || hex.startsWith('rgb')) {
+                // naive: insert alpha if rgb(...) -> rgba(...)
+                if (hex.startsWith('rgb(')) return hex.replace('rgb(', 'rgba(').replace(')', ',' + a + ')');
+                if (hex.startsWith('rgba(')) return hex;
+            }
+            // otherwise parse hex
+            const h = hex.replace('#', '');
+            const bigint = parseInt(h, 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return `rgba(${r}, ${g}, ${b}, ${a})`;
+        }
+
+        function colorFromLambda(lambda_nm) {
+            // kept for backward-compat but prefer wavelengthToRGB
+            return wavelengthToRGB(lambda_nm);
+        }
+
+        // Convert wavelength (nm) to an sRGB CSS color string 'rgb(r,g,b)'.
+        // Adapted from common wavelength->RGB approximations. Handles 200-800 nm.
+        function wavelengthToRGB(wavelength) {
+            let R = 0, G = 0, B = 0;
+            if (wavelength >= 380 && wavelength <= 440) {
+                R = -(wavelength - 440) / (440 - 380);
+                G = 0.0;
+                B = 1.0;
+            } else if (wavelength > 440 && wavelength <= 490) {
+                R = 0.0;
+                G = (wavelength - 440) / (490 - 440);
+                B = 1.0;
+            } else if (wavelength > 490 && wavelength <= 510) {
+                R = 0.0;
+                G = 1.0;
+                B = -(wavelength - 510) / (510 - 490);
+            } else if (wavelength > 510 && wavelength <= 580) {
+                R = (wavelength - 510) / (580 - 510);
+                G = 1.0;
+                B = 0.0;
+            } else if (wavelength > 580 && wavelength <= 645) {
+                R = 1.0;
+                G = -(wavelength - 645) / (645 - 580);
+                B = 0.0;
+            } else if (wavelength > 645 && wavelength <= 780) {
+                R = 1.0;
+                G = 0.0;
+                B = 0.0;
+            } else if (wavelength > 780) {
+                // deep IR -> dim red
+                R = 0.6; G = 0.0; B = 0.0;
+            } else {
+                // UV and below 380 -> map to violet-ish
+                R = 0.6; G = 0.2; B = 1.0;
+            }
+            // intensity factor near vision limits
+            let factor = 1.0;
+            if (wavelength >= 380 && wavelength < 420) { factor = 0.3 + 0.7 * (wavelength - 380) / (420 - 380); }
+            if (wavelength > 700 && wavelength <= 780) { factor = 0.3 + 0.7 * (780 - wavelength) / (780 - 700); }
+
+            // gamma correction
+            const gamma = 0.8;
+            const r = Math.round(Math.pow(R * factor, gamma) * 255);
+            const g = Math.round(Math.pow(G * factor, gamma) * 255);
+            const b = Math.round(Math.pow(B * factor, gamma) * 255);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        /* ===== Main render loop ===== */
+        function render() {
+            const phi = metalPhi();
+            const lambda_nm = Number(wavelengthEl.value);
+            const intensity_rel = Number(intensityEl.value) / 100;
+            const bias_V = Number(biasEl.value);
+            const ivSharpEl = document.getElementById('ivSharp');
+            const ivSharp = ivSharpEl ? Number(ivSharpEl.value) : 0.08;
+            const { f_Hz, Eph_eV, Kmax_eV, Vs, emitted, current, lambda0_nm } =
+                physics(lambda_nm, intensity_rel, bias_V, phi);
+
+            // UI readouts
+            lambdaLabel.textContent = wavelengthEl.value;
+            intensityLabel.textContent = intensityEl.value;
+            biasLabel.textContent = bias_V.toFixed(2);
+            phiOut.textContent = fmt(phi, 2);
+            freqOut.textContent = fmt(f_Hz / 1e12, 2);
+            EphOut.textContent = fmt(Eph_eV, 2);
+            lambda0Out.textContent = fmt(lambda0_nm, 0);
+            KmaxOut.textContent = fmt(Kmax_eV, 2);
+            VsOut.textContent = fmt(Vs, 2);
+            IOut.textContent = fmt(current, 3);
+            emitOut.textContent = emitted ? 'Yes' : 'No';
+            emitOut.style.color = emitted ? 'var(--ok)' : 'var(--warn)';
+            // update graphs in real-time
+            drawGraph();
+
+            // Apparatus coords
+            const tube = { x: 170, y: 70, w: 360, h: 180 };
+            // new lamp position: shifted to the right of the cathode (to create an angled incidence)
+            const cathode = { x: tube.x + 40, y: tube.y + 30, w: 14, h: tube.h - 60 };
+            // shift lamp according to the lampOffset slider so photons approach the cathode at an angle
+            const lampPos = { x: cathode.x + lampOffset, y: tube.y - 28 };
+            const anode = { x: tube.x + tube.w - 54, y: tube.y + 30, w: 14, h: tube.h - 60 };
+
+            // Clear
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Wires (cathode -> bottom left -> galvanometer -> right -> anode)
+            const galvoPos = { x: 520, y: 320, r: 44 };
+            const leftWire = [
+                { x: cathode.x + 7, y: cathode.y + cathode.h },
+                { x: cathode.x + 7, y: tube.y + tube.h + 20 },
+                { x: 260, y: tube.y + tube.h + 20 },
+                { x: galvoPos.x - galvoPos.r, y: galvoPos.y }
+            ];
+            const rightWire = [
+                { x: galvoPos.x + galvoPos.r, y: galvoPos.y },
+                { x: tube.x + tube.w - 7, y: tube.y + tube.h + 20 },
+                { x: anode.x + 7, y: tube.y + tube.h + 20 },
+                { x: anode.x + 7, y: anode.y + anode.h }
+            ];
+            drawWirePath(leftWire);
+            drawWirePath(rightWire);
+
+            // Optional battery in series on the right wire
+            if (showBatteryEl.checked) {
+                drawBattery(tube.x + tube.w + 20, tube.y + tube.h + 20);
+            }
+
+            // Lamp & beam/photons
+            drawLamp(lampPos.x, lampPos.y);
+            const beamColor = colorFromLambda(lambda_nm);
+
+            if (showPhotonsEl.checked) {
+                // spawn photons from lamp aimed toward an offset point on the cathode
+                // this makes the incoming photons form a slanted incidence line across the cathode
+                const spawnSpeed = 160; // pixels per second
+                // define a slanted target segment across the cathode surface so photons strike along a line
+                const segStartX = cathode.x + cathode.w / 2 - 34; // left end of slanted segment
+                const segStartY = cathode.y + 6;
+                const segEndX = cathode.x + cathode.w / 2 + 34;   // right end of slanted segment
+                const segEndY = cathode.y + cathode.h - 6;
+                // we'll aim photons at random points along the segment by picking a midpoint and a small spread
+                const midX = (segStartX + segEndX) / 2;
+                const midY = (segStartY + segEndY) / 2;
+                const segLengthX = Math.abs(segEndX - segStartX);
+                const segLengthY = Math.abs(segEndY - segStartY);
+                // pass the segment extents as a target spread so photons hit across the slanted line
+                spawnPhotons(intensity_rel, beamColor, lampPos.x, lampPos.y, 14, 8, spawnSpeed, midX, midY, segLengthX, segLengthY);
+                updatePhotons((performance.now() - lastTime) / 1000, cathode);
+                drawPhotons();
+                // draw and decay any impact flashes (dt in ms since last frame)
+                const dt_ms = performance.now() - lastTime;
+                drawFlashes(dt_ms);
+            } else {
+                // draw a slanted soft beam that matches the target segment so it sits naturally
+                const segStartX = cathode.x + cathode.w / 2 - 34;
+                const segStartY = cathode.y + 6;
+                const segEndX = cathode.x + cathode.w / 2 + 34;
+                const segEndY = cathode.y + cathode.h - 6;
+                // gradient from lamp to midpoint of the segment
+                const midX = (segStartX + segEndX) / 2;
+                const midY = (segStartY + segEndY) / 2;
+                const grad = ctx.createLinearGradient(lampPos.x, lampPos.y, midX, midY);
+                grad.addColorStop(0, hexToRGBA(beamColor, 0.68));
+                grad.addColorStop(0.6, hexToRGBA(beamColor, 0.18));
+                grad.addColorStop(1, hexToRGBA(beamColor, 0.04));
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                // beam polygon: lamp left -> segment left -> segment right -> lamp right (a tapered slanted beam)
+                ctx.moveTo(lampPos.x - 10, lampPos.y + 6);
+                ctx.lineTo(segStartX, segStartY);
+                ctx.lineTo(segEndX, segEndY);
+                ctx.lineTo(lampPos.x + 10, lampPos.y + 6);
+                ctx.closePath();
+                ctx.fill();
+                // gentle edge to blend into tube
+                ctx.strokeStyle = hexToRGBA(beamColor, 0.08);
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            // Tube & plates
+            drawTube(tube.x, tube.y, tube.w, tube.h);
+
+            // Electrons if emitted
+            if (emitted) {
+                const baseY = tube.y + tube.h / 2;
+                const n = Math.max(2, Math.round(6 * intensity_rel));
+                ctx.fillStyle = '#7dd3fc';
+                for (let i = 0; i < n; i++) {
+                    const t = (performance.now() / 600 + i * 0.12) % 1;
+                    // drift depends on bias: positive V slows/shortens reach
+                    const reach = bias_V <= 0 ? 1.0 : Math.max(0, 1 - Math.min(1, bias_V / Math.max(Vs, 1e-9)));
+                    const x = cathode.x + 10 + (anode.x - cathode.x - 20) * t * reach;
+                    const y = baseY + Math.sin((i + 1) * 1.7 + t * 6) * 12;
+                    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+
+            // Galvanometer needle angle proportional to current
+            const angle = 60 * Math.min(1, current); // clamp
+            drawGalvanometer(galvoPos.x, galvoPos.y, galvoPos.r, angle);
+
+            // update time and loop
+            const now = performance.now(); lastTime = now;
+            requestAnimationFrame(render);
+        }
+
+        /* ===== Graphing ===== */
+        function drawAxes(ctx, W, H, pad, xlabel, ylabel, yOffset, xLabelYOverride) {
+            // yOffset: optional X translation for rotated y-label (in px)
+            // xLabelYOverride: optional Y position for centered x-axis label
+            const plotW = W - 2 * pad, plotH = H - 2 * pad;
+            ctx.clearRect(0, 0, W, H);
+            ctx.strokeStyle = 'rgba(255,255,255,.22)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(pad, pad); ctx.lineTo(pad, pad + plotH); ctx.lineTo(pad + plotW, pad + plotH);
+            ctx.stroke();
+            // improved label placement: use slightly larger left margin and middle-baseline
+            ctx.fillStyle = 'rgba(255,255,255,.86)'; ctx.font = '13px system-ui'; ctx.textBaseline = 'middle';
+            // x label centered and positioned with a small bottom margin to avoid overlapping data labels
+            const defaultXLabelY = H - Math.max(12, Math.floor(pad / 3));
+            const xLabelY = (typeof xLabelYOverride !== 'undefined') ? xLabelYOverride : defaultXLabelY;
+            ctx.fillText(xlabel, pad + plotW / 2 - ctx.measureText(xlabel).width / 2, xLabelY);
+            // y label rotated and placed a bit further left (use provided yOffset or pad/2 for sensible spacing)
+            const yOff = (typeof yOffset !== 'undefined') ? yOffset : Math.max(12, Math.floor(pad / 2));
+            ctx.save(); ctx.translate(yOff, pad + plotH / 2); ctx.rotate(-Math.PI / 2); ctx.fillText(ylabel, 0, 0); ctx.restore();
+            return { plotW, plotH };
+        }
+
+        function drawCurve(ctx, data, pad, color = '#22d3ee') {
+            ctx.save();
+            ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            // subtle glow
+            ctx.shadowColor = color; ctx.shadowBlur = 4;
+            ctx.beginPath();
+            data.forEach((d, i) => { if (i === 0) ctx.moveTo(d.x, d.y); else ctx.lineTo(d.x, d.y); });
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function mapRange(v, a, b, A, B) { return A + (v - a) * (B - A) / (b - a); }
+
+        function drawGraph() {
+            // draw all three graphs in their canvases
+            const phi = metalPhi();
+            const lambda_nm = Number(wavelengthEl.value);
+            const intensity_rel = Number(intensityEl.value) / 100;
+            const bias_V = Number(biasEl.value);
+
+            // ensure crisp canvases on HiDPI displays before drawing
+            ensureHiDPICanvas(graphIV, gIV);
+            ensureHiDPICanvas(graphIInt, gIInt);
+            ensureHiDPICanvas(graphKfreq, gKfreq);
+            // use client sizes (CSS pixels) for layout
+            const wIV = graphIV.clientWidth || 320, hIV = graphIV.clientHeight || 220;
+            const wIInt = graphIInt.clientWidth || wIV, hIInt = graphIInt.clientHeight || hIV;
+            const wK = graphKfreq.clientWidth || wIV, hK = graphKfreq.clientHeight || hIV;
+            // Draw order: 1) I-V curve (top canvas), 2) K_max vs frequency (middle), 3) I vs intensity (bottom)
+            // Draw curves for every selected metal and overlay them with a legend
+            const metals = getSelectedMetals();
+            // read IV sharpness locally to avoid depending on outer scope
+            const ivSharpElLocal = document.getElementById('ivSharp');
+            const ivSharpLocal = ivSharpElLocal ? Number(ivSharpElLocal.value) : 0.08;
+            // draw on the correct canvases (use corresponding widths/heights)
+            drawIVMulti(gIV, wIV, hIV, metals, lambda_nm, intensity_rel, bias_V, ivSharpLocal);
+            drawKFreqMulti(gKfreq, wK, hK, metals, lambda_nm);
+            // for intensity graph we want x tick values closer to the plot and the x label lower
+            drawIIntMulti(gIInt, wIInt, hIInt, metals, lambda_nm, intensity_rel, bias_V);
+            // update per-metal stats
+            updateStats(metals, lambda_nm, intensity_rel, bias_V);
+        }
+
+        // Improved IV graph: physically-plausible photocurrent vs bias
+        function drawIVGraph(gctxLocal, W, H, phi, lambda_nm, intensity_rel, bias_V) {
+            // larger padding so left-side tick labels and data annotations don't overlap
+            const pad = 72;
+            // compute Kmax and Vs for this lambda
+            const { Eph_eV, Kmax_eV, Vs, emitted } = physics(lambda_nm, intensity_rel, 0, phi);
+            // V range: extend both negative collection and positive stopping view for accuracy
+            const Vmin = -6;
+            const Vmax = Math.max(Vs + 4, 6);
+            const N = 320; // higher resolution
+            const points = [];
+            // baseline current if no emission (dark current)
+            const dark = 0.002 * intensity_rel;
+            let I0 = emitted ? intensity_rel : 0; // scale factor
+            // smoother physically-plausible I(V): model current as fraction of electrons with E > eV
+            // use an error-function (Gaussian energy spread) to produce a smooth cutoff at Vs
+            function erf(x) {
+                // Abramowitz & Stegun approximation
+                const sign = x < 0 ? -1 : 1;
+                x = Math.abs(x);
+                const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+                const t = 1.0 / (1.0 + p * x);
+                const y = 1.0 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+                return sign * y;
+            }
+            const sigma = Math.max(0.06, Math.abs(Vs) * 0.08, 0.08); // smoothness of cutoff (in volts)
+            for (let i = 0; i <= N; i++) {
+                const V = Vmin + i * (Vmax - Vmin) / N;
+                let I;
+                if (!emitted) {
+                    // tiny background noise current decaying with positive bias
+                    I = dark * Math.exp(-Math.max(0, V) / 2.0);
+                } else {
+                    // use gaussian CDF to compute fraction with E > eV (smooth tail)
+                    // transform argument: (V - Vs) / (sigma)
+                    const cdf = 0.5 * (1 + erf((V - Vs) / (sigma * Math.SQRT2)));
+                    const cutoff = 1 - cdf; // fraction remaining
+                    // negative-bias collection boost (small)
+                    const boost = Math.min(0.7, Math.max(0, -V / 6));
+                    I = I0 * (1 + boost) * cutoff;
+                    // cap saturation at negative bias
+                    if (V < -1.5) I = I0 * (1 + Math.min(0.7, Math.abs(V) / 6));
+                }
+                I = Math.max(0, I);
+                points.push({ V, I });
+            }
+
+            // draw axes and grid
+            // move y-axis name a little further left for readability (push further into left gutter)
+            // place x tick numeric labels nearer the top of the bottom margin and push the x-axis name down
+            drawAxes(gctxLocal, W, H, pad, 'Voltage V (V)', 'Photocurrent I (amp)', Math.max(12, Math.floor(pad / 3)), H - 6);
+            // scale helpers (compute Imax and mapping before drawing ticks)
+            const xs = v => mapRange(v, Vmin, Vmax, pad, W - pad);
+            const Imax = Math.max(0.0005, ...points.map(p => p.I));
+            const ys = I => mapRange(I, 0, Math.max(0.0005, Imax), H - pad, pad);
+
+            // draw gridlines and numeric ticks on both axes
+            gctxLocal.save(); gctxLocal.strokeStyle = 'rgba(255,255,255,0.04)'; gctxLocal.lineWidth = 1;
+            // vertical grid + x ticks
+            const xTicks = 8;
+            gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.font = '11px system-ui';
+            const tickY = H - pad + 12; // bring numeric x tick labels closer to the plot line
+            for (let i = 0; i <= xTicks; i++) {
+                const v = Vmin + i * (Vmax - Vmin) / xTicks;
+                const x = xs(v);
+                gctxLocal.beginPath(); gctxLocal.moveTo(x, pad); gctxLocal.lineTo(x, H - pad); gctxLocal.stroke();
+                const lbl = fmt(v, (Math.abs(Vmax - Vmin) > 20 ? 1 : 2));
+                gctxLocal.fillText(lbl, x - gctxLocal.measureText(lbl).width / 2, tickY);
+            }
+            // horizontal grid + y ticks
+            const yTicks = 5;
+            for (let i = 0; i <= yTicks; i++) {
+                const vv = (i / yTicks) * Imax;
+                const y = ys(vv);
+                gctxLocal.beginPath(); gctxLocal.moveTo(pad, y); gctxLocal.lineTo(W - pad, y); gctxLocal.stroke();
+                const lbl = fmt(vv, 3);
+                gctxLocal.fillText(lbl, pad - gctxLocal.measureText(lbl).width - 20, y + 4);
+            }
+            gctxLocal.restore();
+
+            // draw stopping potential line if applicable
+            if (Vs > 0) {
+                const x = mapRange(Vs, Vmin, Vmax, pad, W - pad);
+                gctxLocal.setLineDash([6, 5]); gctxLocal.strokeStyle = 'rgba(167,139,250,0.85)'; gctxLocal.beginPath(); gctxLocal.moveTo(x, pad); gctxLocal.lineTo(x, H - pad); gctxLocal.stroke(); gctxLocal.setLineDash([]);
+                gctxLocal.fillStyle = 'rgba(167,139,250,0.9)'; gctxLocal.fillText('Vs ≈ ' + fmt(Vs, 2) + ' V', x + 6, pad + 12);
+            }
+            const path = points.map(p => ({ x: xs(p.V), y: ys(p.I) }));
+            drawCurve(gctxLocal, path, pad, '#22d3ee');
+
+            // draw current operating point marker (bias_V)
+            const curI = physics(lambda_nm, intensity_rel, bias_V, phi).current;
+            const mx = xs(bias_V);
+            const my = ys(curI);
+            // marker halo
+            gctxLocal.beginPath(); gctxLocal.fillStyle = 'rgba(34,211,238,0.14)'; gctxLocal.arc(mx, my, 8, 0, Math.PI * 2); gctxLocal.fill();
+            // marker dot
+            gctxLocal.beginPath(); gctxLocal.fillStyle = '#22d3ee'; gctxLocal.arc(mx, my, 3.4, 0, Math.PI * 2); gctxLocal.fill();
+            // tiny label
+            const lbl = `V=${fmt(bias_V, 2)} V`;
+            gctxLocal.fillStyle = 'rgba(255,255,255,0.86)'; gctxLocal.font = '11px system-ui';
+            // clamp label x so it doesn't overlap the left axis
+            // place value label close to the marker unless that would overlap the left gutter
+            const lblX = Math.max(mx + 6, pad + 6);
+            gctxLocal.fillText(lbl, lblX, my - 8);
+        }
+
+        // I vs intensity: approximately linear for emitted case
+        function drawIIntGraph(gctxLocal, W, H, phi, lambda_nm, intensity_rel, bias_V) {
+            // increased pad to keep y-labels and markers from colliding
+            const pad = 72; const N = 160;
+            // for intensity graph: pull x tick values up (closer to plot) and push x-axis name down
+            drawAxes(gctxLocal, W, H, pad, 'Light intensity (%)', 'Photocurrent I (amp)', undefined, H - pad + 12);
+            // x ticks (0..100%) and grid
+            gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.font = '11px system-ui';
+            const xs = v => mapRange(v, 0, 1, pad, W - pad);
+            // draw x tick values closer to plot area for this graph
+            for (let i = 0; i <= 4; i++) { const frac = i / 4; const x = xs(frac); const label = (frac * 100).toFixed(0) + '%'; const tickY = H - pad + 12; gctxLocal.fillText(label, x - gctxLocal.measureText(label).width / 2, tickY); gctxLocal.beginPath(); gctxLocal.moveTo(x, H - pad); gctxLocal.lineTo(x, H - pad - 6); gctxLocal.strokeStyle = 'rgba(255,255,255,0.06)'; gctxLocal.stroke(); }
+
+            // precompute per-metal intensity curves and find a global Imax for common scaling
+            const allComputed = [];
+            let globalImax = 0.0005;
+            metals.forEach((m, idx) => {
+                const phi = m.phi;
+                const pts = [];
+                for (let i = 0; i <= N; i++) { const Irel = i / N; const { current } = physics(lambda_nm, Irel, bias_V, phi); pts.push({ Irel, I: current }); }
+                const Imax = Math.max(0.0005, ...pts.map(p => p.I));
+                globalImax = Math.max(globalImax, Imax);
+                allComputed.push({ meta: m, idx, pts });
+            });
+
+            const ys = I => mapRange(I, 0, Math.max(0.0005, globalImax), H - pad, pad);
+
+            // y ticks (numeric)
+            const yTicks = 5; gctxLocal.fillStyle = 'rgba(255,255,255,0.78)';
+            for (let i = 0; i <= yTicks; i++) { const vv = (i / yTicks) * globalImax; const y = ys(vv); gctxLocal.beginPath(); gctxLocal.strokeStyle = 'rgba(255,255,255,0.03)'; gctxLocal.moveTo(pad, y); gctxLocal.lineTo(W - pad, y); gctxLocal.stroke(); const lbl = fmt(vv, 3); gctxLocal.fillText(lbl, pad - gctxLocal.measureText(lbl).width - 20, y + 4); }
+
+            allComputed.forEach(({ meta, idx, pts }) => {
+                const path = pts.map(p => ({ x: xs(p.Irel), y: ys(p.I) }));
+                const color = metalColors[idx % metalColors.length];
+                drawCurve(gctxLocal, path, pad, color);
+                // marker for current intensity on each metal
+                const curX = xs(intensity_rel); const curY = ys(physics(lambda_nm, intensity_rel, bias_V, meta.phi).current);
+                gctxLocal.beginPath(); gctxLocal.fillStyle = hexToRGBA(color, 0.12); gctxLocal.arc(curX, curY, 7, 0, Math.PI * 2); gctxLocal.fill(); gctxLocal.beginPath(); gctxLocal.fillStyle = color; gctxLocal.arc(curX, curY, 3, 0, Math.PI * 2); gctxLocal.fill();
+            });
+            // legend
+            let lx = W - pad - 8, ly = pad + 6; gctxLocal.font = '11px system-ui';
+            metals.forEach((m, idx) => { const color = metalColors[idx % metalColors.length]; gctxLocal.fillStyle = color; gctxLocal.fillRect(lx - 12, ly - 8, 10, 8); gctxLocal.fillStyle = 'rgba(255,255,255,0.86)'; const textX = lx + 6; gctxLocal.fillText(m.name || m.id, textX, ly); ly += 18; });
+            const I1 = physics(lambda_nm, 1.0, bias_V, phi).current;
+            const linePath = [{ x: xs(0), y: ys(0) }, { x: xs(1), y: ys(I1) }];
+            drawCurve(gctxLocal, linePath, pad, '#34d399');
+            // also draw sampled points faintly for realism
+            // points may be undefined in this helper; guard against errors
+            const path = (typeof points !== 'undefined' && Array.isArray(points)) ? points.map(p => ({ x: xs(p.Irel), y: ys(p.I) })) : [];
+            gctxLocal.save(); gctxLocal.globalAlpha = 0.7; drawCurve(gctxLocal, path, pad, '#86efac'); gctxLocal.restore();
+            // draw marker for current intensity
+            const curX = xs(intensity_rel);
+            const curY = ys(physics(lambda_nm, intensity_rel, bias_V, phi).current);
+            gctxLocal.beginPath(); gctxLocal.fillStyle = 'rgba(52,211,153,0.14)'; gctxLocal.arc(curX, curY, 8, 0, Math.PI * 2); gctxLocal.fill();
+            gctxLocal.beginPath(); gctxLocal.fillStyle = '#34d399'; gctxLocal.arc(curX, curY, 3.4, 0, Math.PI * 2); gctxLocal.fill();
+            gctxLocal.fillStyle = 'rgba(255,255,255,0.86)'; gctxLocal.font = '11px system-ui';
+            const iLabelX = Math.max(curX + 4, pad + 6);
+            gctxLocal.fillText(`I=${fmt(physics(lambda_nm, intensity_rel, bias_V, phi).current, 3)}`, iLabelX, curY - 8);
+        }
+
+        // Kmax vs frequency: linear with threshold f0
+        function drawKFreqGraph(gctxLocal, W, H, phi, lambda_nm) {
+            const pad = 72;
+            // frequency range in Hz: extend slightly beyond visible for clarity
+            const fmin = 2.5e14, fmax = 9.5e14, N = 240;
+            const f0 = phi / h_eVs; // threshold frequency in Hz
+            const pts = [];
+            let KmaxMax = 0;
+            for (let i = 0; i <= N; i++) {
+                const f = fmin + i * (fmax - fmin) / N;
+                const K = Math.max(0, h_eVs * f - phi);
+                KmaxMax = Math.max(KmaxMax, K);
+                pts.push({ f, K });
+            }
+            // move y-axis name further left for readability (push into left gutter)
+            drawAxes(gctxLocal, W, H, pad, 'Frequency (THz)', 'K_max (eV)', Math.max(12, Math.floor(pad / 3)));
+            // x ticks (THz) and vertical grid
+            const ticks = 6;
+            gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.font = '11px system-ui';
+            const xs = f => mapRange(f, fmin, fmax, pad, W - pad);
+            const ys = K => mapRange(K, 0, Math.max(0.1, KmaxMax), H - pad, pad);
+            const tickY = H - pad + 12;
+            for (let i = 0; i <= ticks; i++) {
+                const f = fmin + i * (fmax - fmin) / ticks;
+                const x = xs(f);
+                const label = (f / 1e12).toFixed(0) + ' THz';
+                gctxLocal.beginPath(); gctxLocal.strokeStyle = 'rgba(255,255,255,0.04)'; gctxLocal.moveTo(x, pad); gctxLocal.lineTo(x, H - pad); gctxLocal.stroke();
+                gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.fillText(label, x - gctxLocal.measureText(label).width / 2, tickY);
+            }
+            // y ticks
+            const yTicks = 5;
+            for (let i = 0; i <= yTicks; i++) {
+                const kv = (i / yTicks) * Math.max(0.1, KmaxMax);
+                const y = ys(kv);
+                gctxLocal.beginPath(); gctxLocal.strokeStyle = 'rgba(255,255,255,0.03)'; gctxLocal.moveTo(pad, y); gctxLocal.lineTo(W - pad, y); gctxLocal.stroke();
+                const lbl = fmt(kv, 2);
+                gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.fillText(lbl, pad - gctxLocal.measureText(lbl).width - 20, y + 4);
+            }
+            // threshold vertical line (f0)
+            if (f0 > fmin && f0 < fmax) {
+                const x = xs(f0);
+                gctxLocal.setLineDash([6, 5]); gctxLocal.strokeStyle = 'rgba(255,205,140,0.95)'; gctxLocal.beginPath(); gctxLocal.moveTo(x, pad); gctxLocal.lineTo(x, H - pad); gctxLocal.stroke(); gctxLocal.setLineDash([]);
+                gctxLocal.fillStyle = 'rgba(255,205,140,0.95)'; gctxLocal.fillText('f₀', x + 6, pad + 14);
+            }
+            const path = pts.map(p => ({ x: xs(p.f), y: ys(p.K) }));
+            drawCurve(gctxLocal, path, pad, '#a78bfa');
+            // label slope: slope = h (eV*s) -> convert to eV per THz for display
+            const slope_eV_per_THz = h_eVs * 1e-12; // eV per THz
+            gctxLocal.fillStyle = 'rgba(255,255,255,0.76)'; gctxLocal.font = '11px system-ui';
+            gctxLocal.fillText(`slope ≈ ${slope_eV_per_THz.toFixed(3)} eV/THz`, pad + 8, pad + 14);
+            // marker for current lambda / frequency
+            const curF = (c / (lambda_nm * 1e-9));
+            const curK = Math.max(0, h_eVs * curF - phi);
+            const mx = xs(curF);
+            const my = ys(curK);
+            gctxLocal.beginPath(); gctxLocal.fillStyle = 'rgba(167,139,250,0.12)'; gctxLocal.arc(mx, my, 8, 0, Math.PI * 2); gctxLocal.fill();
+            gctxLocal.beginPath(); gctxLocal.fillStyle = '#a78bfa'; gctxLocal.arc(mx, my, 3.4, 0, Math.PI * 2); gctxLocal.fill();
+            gctxLocal.fillStyle = 'rgba(255,255,255,0.86)'; gctxLocal.font = '11px system-ui';
+            const kLabelX = Math.max(mx + 4, pad + 6);
+            gctxLocal.fillText(`K=${fmt(curK, 2)} eV`, kLabelX, my - 8);
+        }
+
+        // Stopping potential Vs vs frequency: linear with same slope but units V
+        function drawVsFreqGraph(gctxLocal, W, H, phi, lambda_nm) {
+            const pad = 72;
+            const fmin = 2.5e14, fmax = 9.5e14, N = 240;
+            const f0 = phi / h_eVs;
+            const pts = [];
+            let VmaxVal = 0;
+            for (let i = 0; i <= N; i++) {
+                const f = fmin + i * (fmax - fmin) / N;
+                const Vs = Math.max(0, h_eVs * f - phi); // in eV -> equal to volts for single e
+                VmaxVal = Math.max(VmaxVal, Vs);
+                pts.push({ f, Vs });
+            }
+            drawAxes(gctxLocal, W, H, pad, 'Frequency (THz)', 'Stopping potential V_s (V)');
+            // x ticks in THz with grid
+            gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.font = '11px system-ui';
+            const ticks = 6;
+            const xs = f => mapRange(f, fmin, fmax, pad, W - pad);
+            const ys = V => mapRange(V, 0, Math.max(0.1, VmaxVal), H - pad, pad);
+            for (let i = 0; i <= ticks; i++) {
+                const f = fmin + i * (fmax - fmin) / ticks;
+                const x = xs(f);
+                const label = (f / 1e12).toFixed(0) + ' THz';
+                gctxLocal.beginPath(); gctxLocal.strokeStyle = 'rgba(255,255,255,0.04)'; gctxLocal.moveTo(x, pad); gctxLocal.lineTo(x, H - pad); gctxLocal.stroke();
+                gctxLocal.fillText(label, x - gctxLocal.measureText(label).width / 2, H - 10);
+            }
+            // y ticks
+            const yTicks = 5;
+            for (let i = 0; i <= yTicks; i++) {
+                const kv = (i / yTicks) * Math.max(0.1, VmaxVal);
+                const y = ys(kv);
+                gctxLocal.beginPath(); gctxLocal.strokeStyle = 'rgba(255,255,255,0.03)'; gctxLocal.moveTo(pad, y); gctxLocal.lineTo(W - pad, y); gctxLocal.stroke();
+                const lbl = fmt(kv, 2);
+                gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.fillText(lbl, pad - gctxLocal.measureText(lbl).width - 20, y + 4);
+            }
+            // draw linear Vs line
+            gctxLocal.beginPath();
+            for (let i = 0; i <= N; i++) { const p = pts[i]; const x = xs(p.f); const y = ys(p.Vs); if (i === 0) gctxLocal.moveTo(x, y); else gctxLocal.lineTo(x, y); }
+            gctxLocal.strokeStyle = '#ffd27a'; gctxLocal.lineWidth = 2; gctxLocal.stroke();
+            // threshold marker f0
+            if (f0 > fmin && f0 < fmax) { const x0 = xs(f0); gctxLocal.setLineDash([6, 5]); gctxLocal.strokeStyle = 'rgba(255,205,140,0.9)'; gctxLocal.beginPath(); gctxLocal.moveTo(x0, pad); gctxLocal.lineTo(x0, H - pad); gctxLocal.stroke(); gctxLocal.setLineDash([]); gctxLocal.fillStyle = 'rgba(255,205,140,0.9)'; gctxLocal.fillText('f₀', x0 + 6, pad + 14); }
+            // current operating point marker
+            const curF = c / (lambda_nm * 1e-9);
+            const curVs = Math.max(0, h_eVs * curF - phi);
+            const mx = xs(curF), my = ys(curVs);
+            gctxLocal.beginPath(); gctxLocal.fillStyle = 'rgba(255,210,120,0.14)'; gctxLocal.arc(mx, my, 8, 0, Math.PI * 2); gctxLocal.fill();
+            gctxLocal.beginPath(); gctxLocal.fillStyle = '#ffb86b'; gctxLocal.arc(mx, my, 3.4, 0, Math.PI * 2); gctxLocal.fill();
+            gctxLocal.fillStyle = 'rgba(255,255,255,0.86)'; gctxLocal.font = '11px system-ui';
+            const vsLabelX = Math.max(mx + 4, pad + 6);
+            gctxLocal.fillText(`Vs=${fmt(curVs, 2)} V`, vsLabelX, my - 8);
+        }
+
+        // Draw I-V curves for multiple metals on the same axes
+        function drawIVMulti(gctxLocal, W, H, metals, lambda_nm, intensity_rel, bias_V, ivSharp) {
+            const pad = 72;
+            // determine V range using max Vs among metals
+            const VsList = metals.map(m => physics(lambda_nm, intensity_rel, 0, m.phi).Vs);
+            const maxVs = Math.max(...VsList, 0);
+            const Vmin = -6, Vmax = Math.max(maxVs + 4, 6);
+            const N = 320;
+
+            // prepare axes (push y-label further into left gutter to avoid collisions)
+            // also bring x tick numeric labels up and x-axis name down a bit for clarity
+            drawAxes(gctxLocal, W, H, pad, 'Voltage V (V)', 'Photocurrent I (amp)', Math.max(12, Math.floor(pad / 3)), H - 6);
+
+            // precompute points for all metals so we can use a common vertical scale
+            const computed = [];
+            let globalImax = 0.0005;
+            metals.forEach((m, idx) => {
+                const phi = m.phi;
+                const points = [];
+                const dark = 0.002 * intensity_rel;
+                const { Eph_eV, Kmax_eV, Vs, emitted } = physics(lambda_nm, intensity_rel, 0, phi);
+                const I0 = emitted ? intensity_rel : 0;
+                const sigma = (typeof ivSharp !== 'undefined') ? Math.max(0.005, ivSharp) : Math.max(0.06, Math.abs(Vs) * 0.07, 0.06);
+                function erf(x) { const sign = x < 0 ? -1 : 1; x = Math.abs(x); const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911; const t = 1.0 / (1.0 + p * x); const y = 1.0 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-x * x); return sign * y; }
+                for (let i = 0; i <= N; i++) {
+                    const V = Vmin + i * (Vmax - Vmin) / N;
+                    let I;
+                    if (!emitted) I = dark * Math.exp(-Math.max(0, V) / 2.0);
+                    else {
+                        // textbook-like shape: saturated at negative V, smooth cutoff near Vs
+                        const cdf = 0.5 * (1 + erf((V - Vs) / (sigma * Math.SQRT2)));
+                        const cutoff = 1 - cdf;
+                        const boost = Math.min(0.75, Math.max(0, -V / 6));
+                        I = I0 * (1 + boost) * cutoff;
+                        if (V < -1.5) I = I0 * (1 + Math.min(0.75, Math.abs(V) / 6));
+                    }
+                    points.push({ V, I });
+                }
+                const Imax = Math.max(0.0005, ...points.map(p => p.I));
+                globalImax = Math.max(globalImax, Imax);
+                computed.push({ meta: m, idx, points, Vs });
+            });
+
+            const xs = v => mapRange(v, Vmin, Vmax, pad, W - pad);
+            const ys = I => mapRange(I, 0, Math.max(0.0005, globalImax), H - pad, pad);
+
+            // draw grid and numeric ticks
+            gctxLocal.save(); gctxLocal.strokeStyle = 'rgba(255,255,255,0.04)'; gctxLocal.lineWidth = 1; gctxLocal.font = '11px system-ui'; gctxLocal.fillStyle = 'rgba(255,255,255,0.78)';
+            const tickY = H - pad + 12;
+            const xTicks = 8; for (let i = 0; i <= xTicks; i++) { const v = Vmin + i * (Vmax - Vmin) / xTicks; const x = xs(v); gctxLocal.beginPath(); gctxLocal.moveTo(x, pad); gctxLocal.lineTo(x, H - pad); gctxLocal.stroke(); const lbl = fmt(v, (Math.abs(Vmax - Vmin) > 20 ? 1 : 2)); gctxLocal.fillText(lbl, x - gctxLocal.measureText(lbl).width / 2, tickY); }
+            const yTicks = 5; for (let i = 0; i <= yTicks; i++) { const vv = (i / yTicks) * globalImax; const y = ys(vv); gctxLocal.beginPath(); gctxLocal.moveTo(pad, y); gctxLocal.lineTo(W - pad, y); gctxLocal.stroke(); const lbl = fmt(vv, 3); gctxLocal.fillText(lbl, pad - gctxLocal.measureText(lbl).width - 20, y + 4); }
+            gctxLocal.restore();
+
+            // draw each metal curve now with a shared vertical scale
+            const legendItems = [];
+            computed.forEach(({ meta, idx, points, Vs }) => {
+                const path = points.map(p => ({ x: xs(p.V), y: ys(p.I) }));
+                const color = metalColors[idx % metalColors.length];
+                drawCurve(gctxLocal, path, pad, color);
+                // stopping potential line for this metal
+                if (Vs > 0) { const x = xs(Vs); gctxLocal.setLineDash([6, 5]); gctxLocal.strokeStyle = color; gctxLocal.beginPath(); gctxLocal.moveTo(x, pad); gctxLocal.lineTo(x, H - pad); gctxLocal.stroke(); gctxLocal.setLineDash([]); }
+                // marker at current bias for this metal
+                const curI = physics(lambda_nm, intensity_rel, bias_V, meta.phi).current;
+                const mx = xs(bias_V); const my = ys(curI);
+                gctxLocal.beginPath(); gctxLocal.fillStyle = hexToRGBA(color, 0.12); gctxLocal.arc(mx, my, 7, 0, Math.PI * 2); gctxLocal.fill();
+                gctxLocal.beginPath(); gctxLocal.fillStyle = color; gctxLocal.arc(mx, my, 3, 0, Math.PI * 2); gctxLocal.fill();
+                legendItems.push({ name: meta.name || meta.id, color, phi: meta.phi });
+            });
+
+            // draw legend (top-right)
+            const lx = W - pad - 8;
+            let ly = pad + 6;
+            gctxLocal.font = '11px system-ui';
+            legendItems.forEach(it => {
+                // color swatch
+                gctxLocal.fillStyle = it.color; gctxLocal.fillRect(lx - 12, ly - 8, 10, 8);
+                gctxLocal.fillStyle = 'rgba(255,255,255,0.86)';
+                const textX = lx + 6;
+                gctxLocal.fillText(`${it.name} — ${fmt(it.phi, 2)} eV`, textX, ly);
+                ly += 18;
+            });
+        }
+
+        // Multi-metal K vs frequency: overlay multiple K(f) lines
+        function drawKFreqMulti(gctxLocal, W, H, metals, lambda_nm) {
+            const pad = 72;
+            const fmin = 2.5e14, fmax = 9.5e14, N = 240;
+            drawAxes(gctxLocal, W, H, pad, 'Frequency (THz)', 'K_max (eV)', Math.max(12, Math.floor(pad / 3)));
+            // x ticks + vertical grid
+            const ticks = 6; gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.font = '11px system-ui';
+            const xs = f => mapRange(f, fmin, fmax, pad, W - pad);
+            const tickY = H - pad + 12;
+            for (let i = 0; i <= ticks; i++) { const f = fmin + i * (fmax - fmin) / ticks; const x = xs(f); gctxLocal.beginPath(); gctxLocal.strokeStyle = 'rgba(255,255,255,0.04)'; gctxLocal.moveTo(x, pad); gctxLocal.lineTo(x, H - pad); gctxLocal.stroke(); const label = (f / 1e12).toFixed(0) + ' THz'; gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.fillText(label, x - gctxLocal.measureText(label).width / 2, tickY); }
+
+            // precompute pts for all metals and find global Kmax
+            const allComputed = [];
+            let globalKmax = 0.5;
+            metals.forEach((m, idx) => {
+                const phi = m.phi;
+                const pts = [];
+                for (let i = 0; i <= N; i++) { const f = fmin + i * (fmax - fmin) / N; const K = Math.max(0, h_eVs * f - phi); pts.push({ f, K }); globalKmax = Math.max(globalKmax, K); }
+                allComputed.push({ meta: m, idx, pts });
+            });
+
+            const ys = K => mapRange(K, 0, Math.max(0.1, globalKmax), H - pad, pad);
+
+            // y ticks
+            gctxLocal.save(); gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.font = '11px system-ui';
+            const yTicks = 5;
+            for (let i = 0; i <= yTicks; i++) { const kv = (i / yTicks) * Math.max(0.1, globalKmax); const y = ys(kv); gctxLocal.beginPath(); gctxLocal.strokeStyle = 'rgba(255,255,255,0.03)'; gctxLocal.moveTo(pad, y); gctxLocal.lineTo(W - pad, y); gctxLocal.stroke(); const lbl = fmt(kv, 2); gctxLocal.fillText(lbl, pad - gctxLocal.measureText(lbl).width - 20, y + 4); }
+            gctxLocal.restore();
+
+            // draw each metal line using shared vertical scale
+            allComputed.forEach(({ meta, idx, pts }) => {
+                const path = pts.map(p => ({ x: xs(p.f), y: ys(p.K) }));
+                const color = metalColors[idx % metalColors.length];
+                drawCurve(gctxLocal, path, pad, color);
+                // marker showing K at current lambda
+                const curF = c / (lambda_nm * 1e-9); const curK = Math.max(0, h_eVs * curF - meta.phi);
+                const mx = xs(curF), my = ys(curK);
+                gctxLocal.beginPath(); gctxLocal.fillStyle = hexToRGBA(color, 0.12); gctxLocal.arc(mx, my, 7, 0, Math.PI * 2); gctxLocal.fill(); gctxLocal.beginPath(); gctxLocal.fillStyle = color; gctxLocal.arc(mx, my, 3, 0, Math.PI * 2); gctxLocal.fill();
+            });
+            // legend
+            let lx = W - pad - 8, ly = pad + 6; gctxLocal.font = '11px system-ui';
+            metals.forEach((m, idx) => { const color = metalColors[idx % metalColors.length]; gctxLocal.fillStyle = color; gctxLocal.fillRect(lx - 12, ly - 8, 10, 8); gctxLocal.fillStyle = 'rgba(255,255,255,0.86)'; const textX = lx + 6; gctxLocal.fillText(m.name || m.id, textX, ly); ly += 18; });
+        }
+
+        // update per-metal stats into #metalStats
+        function updateStats(metals, lambda_nm, intensity_rel, bias_V) {
+            const container = document.getElementById('metalStats');
+            if (!container) return;
+            container.innerHTML = '';
+            metals.forEach((m, idx) => {
+                const phi = m.phi;
+                const p = physics(lambda_nm, intensity_rel, bias_V, phi);
+                const html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:12px;height:10px;background:${metalColors[idx % metalColors.length]};border-radius:2px"></div>
+            <div style="font-size:13px;color:var(--muted)"><strong>${m.name}</strong> — ${fmt(phi, 2)} eV</div>
+          </div>
+          <div style="font-size:13px;color:var(--ink);text-align:right">
+            <div>K_max: ${fmt(p.Kmax_eV, 3)} eV &nbsp; Vs: ${fmt(p.Vs, 3)} V</div>
+            <div style="color:var(--muted);font-size:12px">I: ${fmt(p.current, 3)} (amp)</div>
+          </div>
+        </div>`;
+                const div = document.createElement('div'); div.innerHTML = html; container.appendChild(div.firstElementChild);
+            });
+        }
+
+        // Multi-metal I vs intensity: overlay multiple curves
+
+        function drawIIntMulti(gctxLocal, W, H, metals, lambda_nm, intensity_rel, bias_V) {
+            const pad = 56; const N = 120;
+            // pull x tick numeric values closer to the plot and push the x-axis name lower
+            drawAxes(gctxLocal, W, H, pad, 'Light intensity (%)', 'Photocurrent I (amp)', undefined, H - pad + 26);
+            // x ticks (0..100%) drawn a bit higher so they sit closer to the plot line
+            gctxLocal.fillStyle = 'rgba(255,255,255,0.78)'; gctxLocal.font = '11px system-ui';
+            for (let i = 0; i <= 4; i++) { const frac = i / 4; const x = mapRange(frac, 0, 1, pad, W - pad); const label = (frac * 100).toFixed(0) + '%'; const tickY = H - pad + 12; gctxLocal.fillText(label, x - gctxLocal.measureText(label).width / 2, tickY); gctxLocal.beginPath(); gctxLocal.moveTo(x, H - pad); gctxLocal.lineTo(x, H - pad - 6); gctxLocal.strokeStyle = 'rgba(255,255,255,0.06)'; gctxLocal.stroke(); }
+
+            // precompute per-metal intensity curves and find a global Imax for common scaling
+            const allComputed = [];
+            let globalImax = 0.001;
+            metals.forEach((m, idx) => {
+                const phi = m.phi;
+                const pts = [];
+                for (let i = 0; i <= N; i++) { const Irel = i / N; const { current } = physics(lambda_nm, Irel, bias_V, phi); pts.push({ Irel, I: current }); }
+                const Imax = Math.max(0.001, ...pts.map(p => p.I));
+                globalImax = Math.max(globalImax, Imax);
+                allComputed.push({ meta: m, idx, pts });
+            });
+
+            const xs = v => mapRange(v, 0, 1, pad, W - pad);
+            const ys = I => mapRange(I, 0, Math.max(0.001, globalImax), H - pad, pad);
+
+            allComputed.forEach(({ meta, idx, pts }) => {
+                const path = pts.map(p => ({ x: xs(p.Irel), y: ys(p.I) }));
+                const color = metalColors[idx % metalColors.length];
+                drawCurve(gctxLocal, path, pad, color);
+                // marker for current intensity
+                const curX = xs(intensity_rel); const curY = ys(physics(lambda_nm, intensity_rel, bias_V, meta.phi).current);
+                gctxLocal.beginPath(); gctxLocal.fillStyle = hexToRGBA(color, 0.12); gctxLocal.arc(curX, curY, 7, 0, Math.PI * 2); gctxLocal.fill(); gctxLocal.beginPath(); gctxLocal.fillStyle = color; gctxLocal.arc(curX, curY, 3, 0, Math.PI * 2); gctxLocal.fill();
+            });
+            // legend
+            let lx = W - pad - 8, ly = pad + 6; gctxLocal.font = '11px system-ui';
+            metals.forEach((m, idx) => { const color = metalColors[idx % metalColors.length]; gctxLocal.fillStyle = color; gctxLocal.fillRect(lx - 12, ly - 8, 10, 8); gctxLocal.fillStyle = 'rgba(255,255,255,0.86)'; const textX = lx + 6; gctxLocal.fillText(m.name || m.id, textX, ly); ly += 18; });
+        }
+
+        /* ===== Events ===== */
+        // inputs: redraw on input
+        [wavelengthEl, intensityEl, biasEl, showPhotonsEl, showBatteryEl].forEach(el => {
+            el.addEventListener('input', () => { drawGraph(); });
+        });
+        // wire metal checkboxes to redraw
+        if (metalListEl) {
+            const boxes = Array.from(metalListEl.querySelectorAll('input[type=checkbox]'));
+            boxes.forEach(b => b.addEventListener('change', () => { drawGraph(); }));
+        }
+        // iv sharpness slider
+        const ivSharpEl = document.getElementById('ivSharp');
+        if (ivSharpEl) { ivSharpEl.addEventListener('input', () => { drawGraph(); }); }
+
+        // lamp offset slider: update lampOffset and label (affects drawing only)
+        if (lampOffsetEl) {
+            lampOffsetEl.addEventListener('input', () => {
+                lampOffset = Number(lampOffsetEl.value);
+                lampOffsetLabel.textContent = lampOffset;
+            });
+        }
+
+        /* ===== Tooltip handling (pixel-perfect using same apparatus coords) ===== */
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+
+            // use same geometry as render()
+            const tube = { x: 170, y: 70, w: 360, h: 180 };
+            const cathode = { x: tube.x + 40, y: tube.y + 30, w: 14, h: tube.h - 60 };
+            const lampPos = { x: cathode.x + lampOffset, y: tube.y - 28 };
+            const anode = { x: tube.x + tube.w - 54, y: tube.y + 30, w: 14, h: tube.h - 60 };
+            const galvoPos = { x: 520, y: 320, r: 44 };
+            const batteryX = tube.x + tube.w + 20;
+            const batteryY = tube.y + tube.h + 20;
+
+            // default hide
+            tooltip.style.display = 'none';
+
+            // Lamp area (include photons blurb)
+            if (mx > lampPos.x - 30 && mx < lampPos.x + 30 && my > lampPos.y - 30 && my < lampPos.y + 30) {
+                showTip("Lamp: Emits photons that strike the cathode, causing electron emission.", e);
+                return;
+            }
+            // Cathode
+            if (mx >= cathode.x && mx <= cathode.x + cathode.w && my >= cathode.y && my <= cathode.y + cathode.h) {
+                showTip("Cathode: Metal surface that ejects electrons when photons hit.", e);
+                return;
+            }
+            // Anode
+            if (mx >= anode.x && mx <= anode.x + anode.w && my >= anode.y && my <= anode.y + anode.h) {
+                showTip("Anode: Collects the emitted electrons.", e);
+                return;
+            }
+            // Galvanometer (circle)
+            const distG = Math.hypot(mx - galvoPos.x, my - galvoPos.y);
+            if (distG <= galvoPos.r + 6) {
+                showTip("Galvanometer: Detects the photocurrent.", e);
+                return;
+            }
+            // Battery (only if shown)
+            if (showBatteryEl.checked) {
+                // battery drawn at (batteryX, batteryY) with plates; give a small box
+                if (mx >= batteryX - 8 && mx <= batteryX + 28 && my >= batteryY - 24 && my <= batteryY + 24) {
+                    showTip("Battery: Applies bias/stopping potential.", e);
+                    return;
+                }
+            }
+
+        });
+        canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+        function showTip(text, e) {
+            tooltip.textContent = text;
+            tooltip.style.display = 'block';
+            // position near cursor but keep inside viewport
+            const padding = 12;
+            let left = e.clientX + 12;
+            let top = e.clientY - 24;
+            // small adjustment if off-screen to the right/bottom
+            const tw = tooltip.offsetWidth || 200;
+            const th = tooltip.offsetHeight || 28;
+            if (left + tw + padding > window.innerWidth) left = e.clientX - tw - 18;
+            if (top < 6) top = e.clientY + 18;
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+        }
+
+        /* ===== Init ===== */
+        function init() {
+            drawGraph();
+            lastTime = performance.now();
+            // set initial lamp offset label
+            if (lampOffsetLabel) lampOffsetLabel.textContent = lampOffset;
+            render();
+        }
+        init();
+        // redraw graphs / resize canvases on window resize
+        window.addEventListener('resize', () => { drawGraph(); });
+    </script>
+</body>
+
+</html>

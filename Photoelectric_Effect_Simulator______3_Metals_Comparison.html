@@ -1,0 +1,382 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Photoelectric Effect Simulator (3 Metals) — Fixed</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #e5e5f7;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #90d4ff;
+            border-bottom: 2px solid #3d3b70;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .metal-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .sim-block {
+            background-color: #2a2a4a;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            border: 1px solid #3d3b70;
+            width: 370px;
+        }
+
+        .sim-block h2 {
+            color: #ffcc00;
+            margin-bottom: 15px;
+        }
+
+        .simulation-area {
+            background-color: #0d0d1b;
+            border: 3px solid #3d3b70;
+            width: 340px;
+            height: 250px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+            margin: auto;
+        }
+
+        .metal-plate {
+            position: absolute;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 180px;
+            background-color: #c4c4c4;
+            border-radius: 2px;
+            box-shadow: 0 0 10px #ffffff;
+        }
+
+        .light-source {
+            position: absolute;
+            right: 0px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 25px;
+            height: 25px;
+            background-color: #ffcc00;
+            border-radius: 50%;
+            box-shadow: 0 0 25px 8px #ffeb3b;
+            z-index: 2;
+        }
+
+        .light-ray-segment,
+        .electron {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .light-ray-segment {
+            width: 5px;
+            height: 5px;
+            background-color: #ffcc00;
+            opacity: 0.8;
+            box-shadow: 0 0 3px #ffeb3b;
+        }
+
+        .electron {
+            width: 6px;
+            height: 6px;
+            background-color: #00ffaa;
+            box-shadow: 0 0 5px #00ffaa;
+        }
+
+        .controls {
+            text-align: left;
+            margin-top: 12px;
+        }
+
+        .controls label {
+            color: #90d4ff;
+            font-size: 0.9em;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        .current-display {
+            color: #ffcc00;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        canvas {
+            margin-top: 10px;
+            background-color: #1a1a2e;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .small {
+            font-size: 0.85em;
+            color: #cfe9ff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Photoelectric Effect Simulator ⚛️ — 3 Metals Comparison</h1>
+
+    <div class="metal-container">
+
+          <div class="sim-block" data-workfunction="3.0">
+                <h2>Sodium (φ = 3.0 × 10¹⁴ Hz)</h2>
+                <div class="simulation-area"></div>
+                <div class="controls">
+                      <label>Intensity: <span class="intensity-value">50</span></label>
+                      <input type="range" min="10" max="100" value="50" class="intensity-slider">
+                      <label>Frequency: <span class="frequency-value">5.0</span> ×10¹⁴ Hz</label>
+                      <input type="range" min="3.0" max="10.0" step="0.1" value="5.0" class="frequency-slider">
+                      <p class="row"><span class="small">Output Current:</span> <span class="current-display">0</span>
+                    electrons/sec</p>
+                      <canvas width="320" height="200" class="graph-canvas"></canvas>
+                    </div>
+              </div>
+
+          <div class="sim-block" data-workfunction="4.0">
+                <h2>Zinc (φ = 4.0 × 10¹⁴ Hz)</h2>
+                <div class="simulation-area"></div>
+                <div class="controls">
+                      <label>Intensity: <span class="intensity-value">50</span></label>
+                      <input type="range" min="10" max="100" value="50" class="intensity-slider">
+                      <label>Frequency: <span class="frequency-value">5.0</span> ×10¹⁴ Hz</label>
+                      <input type="range" min="3.0" max="10.0" step="0.1" value="5.0" class="frequency-slider">
+                      <p class="row"><span class="small">Output Current:</span> <span class="current-display">0</span>
+                    electrons/sec</p>
+                      <canvas width="320" height="200" class="graph-canvas"></canvas>
+                    </div>
+              </div>
+
+          <div class="sim-block" data-workfunction="5.5">
+                <h2>Platinum (φ = 5.5 × 10¹⁴ Hz)</h2>
+                <div class="simulation-area"></div>
+                <div class="controls">
+                      <label>Intensity: <span class="intensity-value">50</span></label>
+                      <input type="range" min="10" max="100" value="50" class="intensity-slider">
+                      <label>Frequency: <span class="frequency-value">5.0</span> ×10¹⁴ Hz</label>
+                      <input type="range" min="3.0" max="10.0" step="0.1" value="5.0" class="frequency-slider">
+                      <p class="row"><span class="small">Output Current:</span> <span class="current-display">0</span>
+                    electrons/sec</p>
+                      <canvas width="320" height="200" class="graph-canvas"></canvas>
+                    </div>
+              </div>
+
+    </div>
+
+    <script>
+        /* Fixed simulator: uses classes (no duplicate ids), robust per-simulator scopes,
+           requestAnimationFrame-driven graph updates and smoothing to avoid jumps.
+        */
+
+        function startSimulatorBlock(block) {
+            // DOM elements inside this block (scoped)
+            const workFunction = parseFloat(block.dataset.workfunction);
+            const simArea = block.querySelector('.simulation-area');
+            const intensitySlider = block.querySelector('.intensity-slider');
+            const frequencySlider = block.querySelector('.frequency-slider');
+            const intensityValueEl = block.querySelector('.intensity-value');
+            const frequencyValueEl = block.querySelector('.frequency-value');
+            const currentDisplayEl = block.querySelector('.current-display');
+            const canvas = block.querySelector('.graph-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // constants
+            const METAL_PLATE_X = 40;
+            const ELECTRON_PER_PHOTON = 1; // scaling constant (visual)
+            const MAX_POINTS = 120;
+            const MAX_CURRENT_SCALING = 200;
+
+            // state
+            let intensity = parseInt(intensitySlider.value, 10);
+            let frequency = parseFloat(frequencySlider.value);
+            let rawElectronCount = 0;        // counts electrons emitted since last sample
+            let smoothedCurrent = 0;        // exponential smoothing
+            let graphPoints = [];
+
+            // hookup inputs
+            intensitySlider.addEventListener('input', (e) => {
+                intensity = parseInt(e.target.value, 10);
+                intensityValueEl.textContent = intensity;
+            });
+            frequencySlider.addEventListener('input', (e) => {
+                frequency = parseFloat(e.target.value);
+                frequencyValueEl.textContent = frequency.toFixed(1);
+            });
+
+            // create plate + source
+            const plate = document.createElement('div');
+            plate.className = 'metal-plate';
+            simArea.appendChild(plate);
+            const source = document.createElement('div');
+            source.className = 'light-source';
+            simArea.appendChild(source);
+
+            // create photons at intensity-dependent rate
+            function createLightRay() {
+                const ray = document.createElement('div');
+                ray.className = 'light-ray-segment';
+                const startY = simArea.clientHeight / 2 + (Math.random() - 0.5) * 60;
+                ray.style.top = `${startY}px`;
+                ray.style.left = `${simArea.clientWidth - 12}px`;
+                simArea.appendChild(ray);
+
+                let x = simArea.clientWidth - 12;
+                const yDir = (Math.random() - 0.5) * 0.04;
+                const speed = 5 + Math.random() * 1.5;
+                const tick = setInterval(() => {
+                    x -= speed;
+                    ray.style.left = `${x}px`;
+                    ray.style.top = `${startY + (simArea.clientWidth - x) * yDir}px`;
+                    // hit plate
+                    if (x <= METAL_PLATE_X + 6) {
+                        clearInterval(tick);
+                        if (simArea.contains(ray)) simArea.removeChild(ray);
+                        maybeEmitElectron(startY);
+                    }
+                    // out of bounds safety
+                    if (x < -20) {
+                        clearInterval(tick);
+                        if (simArea.contains(ray)) simArea.removeChild(ray);
+                    }
+                }, 18);
+            }
+
+            // emit electron only if frequency >= workFunction
+            function maybeEmitElectron(y) {
+                if (frequency < workFunction) return;
+                rawElectronCount += ELECTRON_PER_PHOTON;
+                // visual electron
+                const e = document.createElement('div');
+                e.className = 'electron';
+                e.style.left = `${METAL_PLATE_X}px`;
+                e.style.top = `${y}px`;
+                simArea.appendChild(e);
+
+                const speedFactor = Math.max(0, frequency - workFunction);
+                const vel = 2 + speedFactor * 3 + (intensity - 50) / 100; // small intensity effect on spread
+                const yDir = (Math.random() - 0.5) * 0.7;
+
+                let ex = METAL_PLATE_X;
+                const t = setInterval(() => {
+                    ex += vel;
+                    e.style.left = `${ex}px`;
+                    e.style.top = `${parseFloat(e.style.top) + yDir}px`;
+                    if (ex > simArea.clientWidth + 10) {
+                        clearInterval(t);
+                        if (simArea.contains(e)) simArea.removeChild(e);
+                    }
+                }, 18);
+            }
+
+            // photon production loop (intensity controls rate)
+            let photonTimerActive = true;
+            (function photonLoop() {
+                if (!photonTimerActive) return;
+                // map intensity [10..100] -> delay [110 .. 10] ms
+                const maxDelay = 110, minDelay = 10;
+                const delay = maxDelay - ((intensity - 10) / 90) * (maxDelay - minDelay);
+                createLightRay();
+                setTimeout(photonLoop, Math.max(6, delay * (0.9 + Math.random() * 0.2)));
+            })();
+
+            // Graphing and smoothing: using requestAnimationFrame and a controlled sample interval
+            let lastSampleTs = performance.now();
+            const SAMPLE_INTERVAL = 120; // ms: how frequently graph samples the rawElectronCount
+
+            function sampleAndDraw(now) {
+                // sample at SAMPLE_INTERVAL
+                if (now - lastSampleTs >= SAMPLE_INTERVAL) {
+                    const rawCurrent = (frequency < workFunction) ? 0 : rawElectronCount * 3; // electrons/sec-like unit
+                    // exponential smoothing to prevent jumps
+                    smoothedCurrent = smoothedCurrent * 0.82 + rawCurrent * 0.18;
+                    // push to graph
+                    graphPoints.push(smoothedCurrent);
+                    if (graphPoints.length > MAX_POINTS) graphPoints.shift();
+                    // reset counter
+                    rawElectronCount = 0;
+                    // update UI
+                    currentDisplayEl.textContent = smoothedCurrent.toFixed(1);
+                    lastSampleTs = now;
+                    drawGraph();
+                }
+                requestAnimationFrame(sampleAndDraw);
+            }
+
+            function drawGraph() {
+                const W = canvas.width, H = canvas.height, pad = 22;
+                ctx.clearRect(0, 0, W, H);
+                // axes
+                ctx.strokeStyle = '#90d4ff';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(pad, H - pad); ctx.lineTo(W - 8, H - pad);
+                ctx.moveTo(pad, H - pad); ctx.lineTo(pad, 8);
+                ctx.stroke();
+
+                if (graphPoints.length === 0) return;
+                // line
+                ctx.beginPath();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffcc00';
+                const len = graphPoints.length;
+                const dx = (W - pad - 8) / (MAX_POINTS - 1);
+                for (let i = 0; i < len; i++) {
+                    const val = Math.min(graphPoints[i], MAX_CURRENT_SCALING);
+                    const x = pad + (MAX_POINTS - len + i) * dx;
+                    const y = (H - pad) - (val / MAX_CURRENT_SCALING) * (H - pad - 12);
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            // start the sampling loop
+            requestAnimationFrame(sampleAndDraw);
+
+            // expose a stop for cleanup if needed
+            return {
+                stop: () => { photonTimerActive = false; }
+            };
+        }
+
+        // initialize all blocks
+        document.querySelectorAll('.sim-block').forEach(block => startSimulatorBlock(block));
+
+    </script>
+</body>
+
+</html>

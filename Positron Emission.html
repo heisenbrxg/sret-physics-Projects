@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PET Scan Antimatter Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00d4ff, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1em;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel h2 {
+            margin-bottom: 15px;
+            color: #00d4ff;
+            font-size: 1.5em;
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            background: #000;
+            display: block;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9em;
+            color: #aaa;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00d4ff;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00d4ff;
+            cursor: pointer;
+            border: none;
+        }
+
+        .value-display {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        button {
+            background: linear-gradient(45deg, #00d4ff, #0099ff);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .info-panel h3 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        .info-panel p {
+            line-height: 1.6;
+            color: #ccc;
+            margin-bottom: 10px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        @media (max-width: 968px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>⚛️ PET Scan Antimatter Simulator</h1>
+            <p class="subtitle">Positron Emission Tomography - Visualizing Antimatter in Medicine</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="panel">
+                <h2>🔬 Detector Ring Visualization</h2>
+                <canvas id="detectorCanvas"></canvas>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #00ff00;"></div>
+                        <span>Active Detector</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff0000;"></div>
+                        <span>Tumor</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffff00;"></div>
+                        <span>Positron</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #00d4ff;"></div>
+                        <span>Gamma Rays</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>📊 3D Reconstruction</h2>
+                <canvas id="reconstructionCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>⚙️ Simulation Controls</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Positron Emission Rate: <span class="value-display" id="emissionValue">5</span>/s</label>
+                    <input type="range" id="emissionRate" min="1" max="20" value="5">
+                </div>
+                <div class="control-group">
+                    <label>Tumor Activity: <span class="value-display" id="activityValue">80</span>%</label>
+                    <input type="range" id="tumorActivity" min="20" max="100" value="80">
+                </div>
+                <div class="control-group">
+                    <label>Detector Sensitivity: <span class="value-display" id="sensitivityValue">95</span>%</label>
+                    <input type="range" id="detectorSensitivity" min="50" max="100" value="95">
+                </div>
+                <div class="control-group">
+                    <label>Background Noise: <span class="value-display" id="noiseValue">10</span>%</label>
+                    <input type="range" id="backgroundNoise" min="0" max="50" value="10">
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px; margin-top: 20px; justify-content: center;">
+                <button onclick="toggleSimulation()">▶️ Start/Pause</button>
+                <button onclick="resetSimulation()">🔄 Reset</button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-label">Annihilations</div>
+                    <div class="stat-value" id="annihilationCount">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Detected Events</div>
+                    <div class="stat-value" id="detectedCount">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Resolution (mm)</div>
+                    <div class="stat-value" id="resolution">4.2</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Image Quality</div>
+                    <div class="stat-value" id="imageQuality">Excellent</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3>📖 How PET Scans Use Antimatter</h3>
+            <p><strong>Positron (Antimatter) Emission:</strong> Radioactive tracers like F-18 FDG emit positrons
+                (antimatter particles) that travel a few millimeters in tissue.</p>
+            <p><strong>Matter-Antimatter Annihilation:</strong> When a positron collides with an electron, they
+                annihilate, converting their entire mass into energy according to Einstein's E=mc².</p>
+            <p><strong>Gamma Ray Production:</strong> This annihilation produces exactly two gamma rays (511 keV each)
+                traveling in opposite directions at 180° apart.</p>
+            <p><strong>Coincidence Detection:</strong> Detectors arranged in a ring detect these gamma rays
+                simultaneously, allowing precise location of the annihilation event.</p>
+            <p><strong>Medical Application:</strong> Cancer cells consume more glucose than normal cells, so areas with
+                high tracer concentration (tumors) appear brighter in PET images.</p>
+        </div>
+    </div>
+
+    <script>
+        const detectorCanvas = document.getElementById('detectorCanvas');
+        const reconstructionCanvas = document.getElementById('reconstructionCanvas');
+        const detectorCtx = detectorCanvas.getContext('2d');
+        const reconstructionCtx = reconstructionCanvas.getContext('2d');
+
+        let isRunning = false;
+        let annihilationCount = 0;
+        let detectedCount = 0;
+        let particles = [];
+        let gammaRays = [];
+        let detections = [];
+        let heatmap = [];
+
+        const numDetectors = 48;
+        const detectors = [];
+
+        function resizeCanvas() {
+            detectorCanvas.width = detectorCanvas.offsetWidth;
+            detectorCanvas.height = detectorCanvas.offsetHeight;
+            reconstructionCanvas.width = reconstructionCanvas.offsetWidth;
+            reconstructionCanvas.height = reconstructionCanvas.offsetHeight;
+
+            initDetectors();
+            initHeatmap();
+        }
+
+        function initDetectors() {
+            detectors.length = 0;
+            const centerX = detectorCanvas.width / 2;
+            const centerY = detectorCanvas.height / 2;
+            const radius = Math.min(centerX, centerY) * 0.8;
+
+            for (let i = 0; i < numDetectors; i++) {
+                const angle = (i / numDetectors) * Math.PI * 2;
+                detectors.push({
+                    x: centerX + Math.cos(angle) * radius,
+                    y: centerY + Math.sin(angle) * radius,
+                    angle: angle,
+                    active: false
+                });
+            }
+        }
+
+        function initHeatmap() {
+            heatmap = [];
+            const gridSize = 50;
+            for (let i = 0; i < gridSize; i++) {
+                heatmap[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    heatmap[i][j] = 0;
+                }
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const tumorX = detectorCanvas.width / 2 + 40;
+        const tumorY = detectorCanvas.height / 2 - 30;
+        const tumorRadius = 25;
+
+        function emitPositron() {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * tumorRadius;
+            particles.push({
+                x: tumorX + Math.cos(angle) * distance,
+                y: tumorY + Math.sin(angle) * distance,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                life: 30 + Math.random() * 30,
+                type: 'positron'
+            });
+        }
+
+        function createAnnihilation(x, y) {
+            annihilationCount++;
+            const angle = Math.random() * Math.PI * 2;
+
+            gammaRays.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * 8,
+                vy: Math.sin(angle) * 8,
+                life: 100,
+                pair: 1
+            });
+
+            gammaRays.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle + Math.PI) * 8,
+                vy: Math.sin(angle + Math.PI) * 8,
+                life: 100,
+                pair: 1
+            });
+
+            updateHeatmap(x, y);
+        }
+
+        function updateHeatmap(x, y) {
+            const gridSize = 50;
+            const gridX = Math.floor((x / detectorCanvas.width) * gridSize);
+            const gridY = Math.floor((y / detectorCanvas.height) * gridSize);
+
+            if (gridX >= 0 && gridX < gridSize && gridY >= 0 && gridY < gridSize) {
+                heatmap[gridX][gridY] += 1;
+            }
+        }
+
+        function checkDetectorHit(ray) {
+            const sensitivity = parseInt(document.getElementById('detectorSensitivity').value) / 100;
+
+            for (let i = 0; i < detectors.length; i++) {
+                const det = detectors[i];
+                const dist = Math.sqrt((ray.x - det.x) ** 2 + (ray.y - det.y) ** 2);
+
+                if (dist < 15 && Math.random() < sensitivity) {
+                    det.active = true;
+                    setTimeout(() => det.active = false, 200);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function update() {
+            if (!isRunning) return;
+
+            const emissionRate = parseInt(document.getElementById('emissionRate').value);
+            if (Math.random() < emissionRate / 60) {
+                emitPositron();
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+
+                if (p.life <= 0) {
+                    createAnnihilation(p.x, p.y);
+                    particles.splice(i, 1);
+                }
+            }
+
+            let detectedPairs = 0;
+            for (let i = gammaRays.length - 1; i >= 0; i--) {
+                const ray = gammaRays[i];
+                ray.x += ray.vx;
+                ray.y += ray.vy;
+                ray.life--;
+
+                if (checkDetectorHit(ray)) {
+                    detectedPairs++;
+                }
+
+                if (ray.life <= 0 || ray.x < 0 || ray.x > detectorCanvas.width ||
+                    ray.y < 0 || ray.y > detectorCanvas.height) {
+                    gammaRays.splice(i, 1);
+                }
+            }
+
+            if (detectedPairs >= 2) {
+                detectedCount++;
+            }
+
+            document.getElementById('annihilationCount').textContent = annihilationCount;
+            document.getElementById('detectedCount').textContent = detectedCount;
+
+            const quality = (detectedCount / Math.max(1, annihilationCount)) * 100;
+            if (quality > 80) document.getElementById('imageQuality').textContent = 'Excellent';
+            else if (quality > 60) document.getElementById('imageQuality').textContent = 'Good';
+            else if (quality > 40) document.getElementById('imageQuality').textContent = 'Fair';
+            else document.getElementById('imageQuality').textContent = 'Poor';
+        }
+
+        function drawDetectorView() {
+            detectorCtx.fillStyle = '#000';
+            detectorCtx.fillRect(0, 0, detectorCanvas.width, detectorCanvas.height);
+
+            const centerX = detectorCanvas.width / 2;
+            const centerY = detectorCanvas.height / 2;
+
+            detectorCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            detectorCtx.lineWidth = 2;
+            detectorCtx.beginPath();
+            detectorCtx.arc(centerX, centerY, Math.min(centerX, centerY) * 0.8, 0, Math.PI * 2);
+            detectorCtx.stroke();
+
+            detectorCtx.fillStyle = 'rgba(100, 100, 100, 0.3)';
+            detectorCtx.fillRect(centerX - 80, centerY - 20, 160, 40);
+            detectorCtx.fillStyle = 'rgba(150, 150, 150, 0.5)';
+            detectorCtx.font = '14px Arial';
+            detectorCtx.textAlign = 'center';
+            detectorCtx.fillText('PATIENT', centerX, centerY);
+
+            detectorCtx.fillStyle = 'rgba(255, 0, 0, 0.6)';
+            detectorCtx.beginPath();
+            detectorCtx.arc(tumorX, tumorY, tumorRadius, 0, Math.PI * 2);
+            detectorCtx.fill();
+            detectorCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+            detectorCtx.lineWidth = 2;
+            detectorCtx.stroke();
+
+            for (const det of detectors) {
+                detectorCtx.fillStyle = det.active ? '#00ff00' : 'rgba(100, 150, 255, 0.5)';
+                detectorCtx.fillRect(det.x - 8, det.y - 15, 16, 30);
+                detectorCtx.strokeStyle = det.active ? '#00ff00' : 'rgba(100, 150, 255, 0.8)';
+                detectorCtx.strokeRect(det.x - 8, det.y - 15, 16, 30);
+            }
+
+            for (const p of particles) {
+                detectorCtx.fillStyle = '#ffff00';
+                detectorCtx.beginPath();
+                detectorCtx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                detectorCtx.fill();
+            }
+
+            for (const ray of gammaRays) {
+                detectorCtx.strokeStyle = 'rgba(0, 212, 255, 0.7)';
+                detectorCtx.lineWidth = 2;
+                detectorCtx.beginPath();
+                detectorCtx.moveTo(ray.x, ray.y);
+                detectorCtx.lineTo(ray.x - ray.vx * 3, ray.y - ray.vy * 3);
+                detectorCtx.stroke();
+
+                detectorCtx.fillStyle = 'rgba(0, 255, 255, 0.9)';
+                detectorCtx.beginPath();
+                detectorCtx.arc(ray.x, ray.y, 3, 0, Math.PI * 2);
+                detectorCtx.fill();
+            }
+        }
+
+        function drawReconstruction() {
+            reconstructionCtx.fillStyle = '#000';
+            reconstructionCtx.fillRect(0, 0, reconstructionCanvas.width, reconstructionCanvas.height);
+
+            const gridSize = heatmap.length;
+            const cellWidth = reconstructionCanvas.width / gridSize;
+            const cellHeight = reconstructionCanvas.height / gridSize;
+
+            let maxHeat = 1;
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (heatmap[i][j] > maxHeat) maxHeat = heatmap[i][j];
+                }
+            }
+
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (heatmap[i][j] > 0) {
+                        const intensity = heatmap[i][j] / maxHeat;
+                        const r = Math.floor(255 * intensity);
+                        const g = Math.floor(100 * intensity);
+                        const b = Math.floor(50 * intensity);
+                        reconstructionCtx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
+                        reconstructionCtx.fillRect(i * cellWidth, j * cellHeight, cellWidth, cellHeight);
+                    }
+                }
+            }
+
+            reconstructionCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            reconstructionCtx.font = '16px Arial';
+            reconstructionCtx.fillText('3D Metabolic Activity Map', 10, 30);
+        }
+
+        function animate() {
+            update();
+            drawDetectorView();
+            drawReconstruction();
+            requestAnimationFrame(animate);
+        }
+
+        function toggleSimulation() {
+            isRunning = !isRunning;
+        }
+
+        function resetSimulation() {
+            particles = [];
+            gammaRays = [];
+            annihilationCount = 0;
+            detectedCount = 0;
+            initHeatmap();
+        }
+
+        document.getElementById('emissionRate').addEventListener('input', function () {
+            document.getElementById('emissionValue').textContent = this.value;
+        });
+
+        document.getElementById('tumorActivity').addEventListener('input', function () {
+            document.getElementById('activityValue').textContent = this.value;
+        });
+
+        document.getElementById('detectorSensitivity').addEventListener('input', function () {
+            document.getElementById('sensitivityValue').textContent = this.value;
+        });
+
+        document.getElementById('backgroundNoise').addEventListener('input', function () {
+            document.getElementById('noiseValue').textContent = this.value;
+        });
+
+        animate();
+    </script>
+</body>
+
+</html>

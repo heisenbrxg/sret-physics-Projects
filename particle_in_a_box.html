@@ -1,0 +1,462 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Particle in a Box — Axes & Autorotate (V2)</title>
+    <style>
+        :root {
+            --card: rgba(255, 255, 255, 0.04)
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(135deg, #050913, #0a0f25);
+            color: #fff;
+            font-family: Inter, Segoe UI, Arial
+        }
+
+        .header {
+            padding: 14px;
+            text-align: center
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 12px auto;
+            padding: 12px
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px
+        }
+
+        .btn {
+            background: var(--card);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #fff
+        }
+
+        .btn.active {
+            background: linear-gradient(90deg, #4ecdc4, #45b7d1);
+            color: #041018
+        }
+
+        .panel {
+            background: var(--card);
+            padding: 12px;
+            border-radius: 8px
+        }
+
+        .viz {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 12px
+        }
+
+        canvas {
+            background: #071021;
+            border-radius: 8px;
+            display: block;
+            max-width: 100%
+        }
+
+        .surface-box,
+        #threejs-container {
+            width: 100%;
+            height: 560px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000
+        }
+
+        .small {
+            font-size: 13px;
+            color: #9fb
+        }
+
+        .info {
+            padding: 10px
+        }
+
+        label {
+            font-size: 13px;
+            display: block;
+            margin-bottom: 6px;
+            color: #cde
+        }
+
+        input[type=range] {
+            width: 100%
+        }
+
+        .axis-toggle {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        @media (max-width:1000px) {
+            .viz {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h2>Particle in a Box — Axes & Autorotate (V2)</h2>
+        <div class="small">Fluorescent green axis lines & labels, heatmap 2D surface, larger 1D view. Place
+            <code>three.min.js</code> (r0.149.0) next to this file for full offline use.</div>
+    </div>
+
+    <div class="wrap">
+        <div class="controls panel">
+            <button class="btn active" id="btn-1d">1D</button>
+            <button class="btn" id="btn-2d">2D (Surface)</button>
+            <button class="btn" id="btn-3d">3D (Oscillating)</button>
+            <div style="flex:1"></div>
+            <div class="small">Auto-rotate is <strong>off by default</strong> for both 2D and 3D — use the toggles to
+                enable rotation.</div>
+        </div>
+        <div class="viz">
+            <div>
+                <!-- 1D -->
+                <div id="view-1d" class="panel">
+                    <canvas id="canvas-1d" width="1000" height="700"></canvas>
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                        <div style="flex:1">
+                            <label>Quantum number n (1..10)</label>
+                            <input type="range" id="n1" min="1" max="10" value="1">
+                        </div>
+                        <div style="width:140px" class="panel info">
+                            <div class="small">Energy</div>
+                            <div id="energy-1d">E1</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2D -->
+                <div id="view-2d" class="panel" style="display:none;margin-top:12px">
+                    <div id="surface-container" class="surface-box"></div>
+                    <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+                        <div style="flex:1">
+                            <label>n<sub>x</sub> (1..5)</label>
+                            <input type="range" id="nx2" min="1" max="5" value="1">
+                            <label>n<sub>y</sub> (1..5)</label>
+                            <input type="range" id="ny2" min="1" max="5" value="1">
+                        </div>
+                        <div style="width:220px" class="panel info">
+                            <div class="small">Surface Controls</div>
+                            <div class="axis-toggle">
+                                <button class="btn" id="surface-autorotate">Toggle Auto-Rotate</button>
+                                <button class="btn" id="surface-reset">Reset View</button>
+                            </div>
+                            <div style="margin-top:8px;color:#ddd;font-size:13px">Mouse drag to orbit (pauses
+                                auto-rotate while dragging).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D -->
+                <div id="view-3d" class="panel" style="display:none;margin-top:12px">
+                    <div id="threejs-container"></div>
+                    <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+                        <div style="flex:1">
+                            <label>n<sub>x</sub> (1..5)</label>
+                            <input type="range" id="nx3" min="1" max="5" value="1">
+                            <label>n<sub>y</sub> (1..5)</label>
+                            <input type="range" id="ny3" min="1" max="5" value="1">
+                            <label>n<sub>z</sub> (1..5)</label>
+                            <input type="range" id="nz3" min="1" max="5" value="1">
+                        </div>
+                        <div style="width:220px" class="panel info">
+                            <div class="small">3D Controls</div>
+                            <div class="axis-toggle">
+                                <button class="btn" id="box-autorotate">Toggle Auto-Rotate</button>
+                                <button class="btn" id="box-reset">Reset View</button>
+                            </div>
+                            <div style="margin-top:8px;color:#ddd;font-size:13px">Toggle rotation for the box; particle
+                                motion continues regardless.</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div>
+                <div class="panel info">
+                    <div class="small">Notes</div>
+                    <div>Fluorescent green used for axes and labels: <code>#00ff80</code>. Labels are larger for
+                        readability. Use local <code>three.min.js</code> v0.149 for offline operation.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+
+            /* ---------- 1D ---------- */
+            (function () {
+                const canvas = document.getElementById('canvas-1d'), ctx = canvas.getContext('2d');
+                const n1 = document.getElementById('n1'), energyLabel = document.getElementById('energy-1d');
+                const L = 1, hbar = 1, m = 1;
+                function draw1() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const n = +n1.value;
+                    ctx.strokeStyle = '#2a3a4a'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(40, canvas.height / 2); ctx.lineTo(canvas.width - 40, canvas.height / 2); ctx.stroke();
+                    ctx.strokeStyle = '#ffd93d'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.moveTo(40, 40); ctx.lineTo(40, canvas.height - 40); ctx.moveTo(canvas.width - 40, 40); ctx.lineTo(canvas.width - 40, canvas.height - 40); ctx.stroke();
+                    const points = 400, xscale = (canvas.width - 80), yscale = canvas.height / 4.5;
+                    ctx.beginPath(); ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 2;
+                    for (let i = 0; i <= points; i++) {
+                        const x = i / points;
+                        const psi = Math.sqrt(2 / L) * Math.sin(n * Math.PI * x / L);
+                        const px = 40 + x * xscale;
+                        const py = canvas.height / 2 - psi * yscale;
+                        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                    }
+                    ctx.stroke();
+                    ctx.beginPath(); ctx.fillStyle = 'rgba(78,205,196,0.16)'; ctx.moveTo(40, canvas.height / 2);
+                    for (let i = 0; i <= points; i++) {
+                        const x = i / points;
+                        const psi = Math.sqrt(2 / L) * Math.sin(n * Math.PI * x / L);
+                        const px = 40 + x * xscale;
+                        const py = canvas.height / 2 - (psi * psi) * yscale * 0.9;
+                        ctx.lineTo(px, py);
+                    }
+                    ctx.lineTo(canvas.width - 40, canvas.height / 2); ctx.closePath(); ctx.fill();
+                    const energy = (n * n * Math.PI * Math.PI * hbar * hbar) / (2 * m * L * L);
+                    energyLabel.textContent = "E" + n + " = " + energy.toFixed(3);
+                }
+                n1.addEventListener('input', draw1);
+                draw1();
+            })();
+
+            /* ---------- Load Three.js ---------- */
+            function loadThreeThen(start) {
+                var s = document.createElement('script');
+                s.src = 'three.min.js';
+                s.onload = start;
+                s.onerror = function () {
+                    var c = document.createElement('script');
+                    c.src = 'https://unpkg.com/three@0.149.0/build/three.min.js';
+                    c.onload = start;
+                    c.onerror = function () { document.body.innerHTML = '<div style="padding:24px;color:#fff;background:#600;border-radius:8px;margin:16px">Three.js failed to load. Place three.min.js v0.149 in same folder for offline use.</div>'; };
+                    document.head.appendChild(c);
+                };
+                document.head.appendChild(s);
+            }
+
+            loadThreeThen(startApp);
+
+            function startApp() {
+                /* ---------- 2D Surface ---------- */
+                (function () {
+                    let scene, camera, renderer, surfaceMesh, group;
+                    const container = document.getElementById('surface-container');
+                    const nx2 = document.getElementById('nx2'), ny2 = document.getElementById('ny2');
+                    const autorotateBtn = document.getElementById('surface-autorotate');
+                    const resetBtn = document.getElementById('surface-reset');
+                    let autoRotate = false;
+                    let isDragging = false, lastX = 0, lastY = 0;
+
+                    function makeLabelSprite(text) {
+                        const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+                        const ctx = c.getContext('2d');
+                        ctx.fillStyle = '#00ff80'; ctx.font = '32px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText(text, c.width / 2, c.height / 2);
+                        const tex = new THREE.CanvasTexture(c); tex.needsUpdate = true;
+                        const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+                        const spr = new THREE.Sprite(mat); spr.scale.set(0.45, 0.12, 1); return spr;
+                    }
+
+                    function initSurface() {
+                        container.innerHTML = '';
+                        scene = new THREE.Scene(); scene.background = new THREE.Color(0x02060f);
+                        const w = container.clientWidth, h = container.clientHeight;
+                        camera = new THREE.PerspectiveCamera(40, w / h, 0.01, 50); camera.position.set(1.8, 1.2, 1.8); camera.lookAt(0, 0, 0);
+                        renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(w, h, false); container.appendChild(renderer.domElement);
+                        scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+                        const dir = new THREE.DirectionalLight(0xffffff, 0.6); dir.position.set(3, 5, 2); scene.add(dir);
+
+                        group = new THREE.Group(); scene.add(group);
+
+                        buildSurface();
+                        addAxes();
+
+                        // pointer orbit
+                        container.addEventListener('pointerdown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; container.setPointerCapture(e.pointerId); autoRotate = false; autorotateBtn.classList.remove('active'); });
+                        container.addEventListener('pointerup', (e) => { isDragging = false; try { container.releasePointerCapture(e.pointerId); } catch (e) { } });
+                        container.addEventListener('pointermove', (e) => { if (!isDragging) return; const dx = (e.clientX - lastX) / 300; const dy = (e.clientY - lastY) / 300; group.rotation.y += dx; group.rotation.x += dy; lastX = e.clientX; lastY = e.clientY; });
+
+                        autorotateBtn.addEventListener('click', () => { autoRotate = !autoRotate; autorotateBtn.classList.toggle('active'); });
+                        resetBtn.addEventListener('click', () => { group.rotation.set(0, 0, 0); });
+
+                        window.addEventListener('resize', onResize);
+                        animate();
+                    }
+
+                    function buildSurface() {
+                        if (surfaceMesh) { group.remove(surfaceMesh); surfaceMesh.geometry.dispose(); surfaceMesh.material.dispose(); surfaceMesh = null; }
+                        const nx = Math.max(1, Math.min(5, +nx2.value));
+                        const ny = Math.max(1, Math.min(5, +ny2.value));
+                        const seg = 128;
+                        const geom = new THREE.PlaneGeometry(1, 1, seg, seg);
+                        const pos = geom.attributes.position;
+                        for (let i = 0; i < pos.count; i++) {
+                            const vx = pos.getX(i) + 0.5;
+                            const vy = pos.getY(i) + 0.5;
+                            const psi = Math.sin(nx * Math.PI * vx) * Math.sin(ny * Math.PI * vy);
+                            pos.setZ(i, psi * 0.28);
+                        }
+                        geom.computeVertexNormals();
+                        const colors = [];
+                        for (let i = 0; i < pos.count; i++) {
+                            const z = pos.getZ(i) / 0.28;
+                            const t = (z + 1) / 2;
+                            const h = 0.65 * (1 - t) + 0.02 * t;
+                            const col = new THREE.Color(); col.setHSL(h, 0.95, 0.45);
+                            colors.push(col.r, col.g, col.b);
+                        }
+                        geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                        const mat = new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, flatShading: false, roughness: 0.6 });
+                        surfaceMesh = new THREE.Mesh(geom, mat); surfaceMesh.rotation.x = -Math.PI / 2;
+                        group.add(surfaceMesh);
+                    }
+
+                    function addAxes() {
+                        const green = 0x00ff80;
+                        const lineMat = new THREE.LineBasicMaterial({ color: green });
+                        const xLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.5, 0, -0.5), new THREE.Vector3(0.5, 0, -0.5)]), lineMat);
+                        const yLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.5, 0, -0.5), new THREE.Vector3(-0.5, 0, 0.5)]), lineMat);
+                        const zLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.5, 0, -0.5), new THREE.Vector3(-0.5, 0.5, -0.5)]), lineMat);
+                        group.add(xLine, yLine, zLine);
+                        const lx = makeLabelSprite('x'); lx.position.set(0.62, 0, -0.5); group.add(lx);
+                        const ly = makeLabelSprite('y'); ly.position.set(-0.5, 0, 0.62); group.add(ly);
+                        const lz = makeLabelSprite('z'); lz.position.set(-0.5, 0.62, -0.5); group.add(lz);
+                    }
+
+                    function animate() {
+                        requestAnimationFrame(animate);
+                        if (autoRotate && group) { group.rotation.y += 0.0035; }
+                        if (renderer) renderer.render(scene, camera);
+                    }
+
+                    function onResize() { if (!renderer) return; const w = container.clientWidth, h = container.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+
+                    nx2.addEventListener('input', () => { buildSurface(); });
+                    ny2.addEventListener('input', () => { buildSurface(); });
+
+                    window._initSurfaceV2 = initSurface;
+                    window._buildSurfaceV2 = buildSurface;
+                })();
+
+                /* 3D */
+                (function () {
+                    let scene, camera, renderer, group, particle;
+                    const container = document.getElementById('threejs-container');
+                    const nx3 = document.getElementById('nx3'), ny3 = document.getElementById('ny3'), nz3 = document.getElementById('nz3');
+                    const autorotateBtn = document.getElementById('box-autorotate');
+                    const resetBtn = document.getElementById('box-reset');
+                    let autoRotate = false;
+                    let startTime = 0;
+
+                    function makeLabel(text) {
+                        const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+                        const ctx = c.getContext('2d');
+                        ctx.fillStyle = '#00ff80'; ctx.font = '32px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText(text, c.width / 2, c.height / 2);
+                        const tex = new THREE.CanvasTexture(c); tex.needsUpdate = true;
+                        const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+                        const spr = new THREE.Sprite(mat); spr.scale.set(0.45, 0.12, 1); return spr;
+                    }
+
+                    function init3() {
+                        container.innerHTML = '';
+                        scene = new THREE.Scene(); scene.background = new THREE.Color(0x02060f);
+                        const w = container.clientWidth, h = container.clientHeight;
+                        camera = new THREE.PerspectiveCamera(50, w / h, 0.01, 50); camera.position.set(2.2, 2.2, 2.2); camera.lookAt(0, 0, 0);
+                        renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(w, h, false); container.appendChild(renderer.domElement);
+                        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+                        const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(2, 4, 3); scene.add(dl);
+
+                        group = new THREE.Group(); scene.add(group);
+
+                        const boxGeom = new THREE.BoxGeometry(1, 1, 1);
+                        const boxMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, side: THREE.BackSide, roughness: 0.7 });
+                        const box = new THREE.Mesh(boxGeom, boxMat); group.add(box);
+
+                        const green = 0x00ff80;
+                        const lineMat = new THREE.LineBasicMaterial({ color: green });
+                        const xLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.6, 0, 0), new THREE.Vector3(0.6, 0, 0)]), lineMat);
+                        const yLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -0.6, 0), new THREE.Vector3(0, 0.6, 0)]), lineMat);
+                        const zLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, -0.6), new THREE.Vector3(0, 0, 0.6)]), lineMat);
+                        group.add(xLine, yLine, zLine);
+
+                        const lx = makeLabel('x'); lx.position.set(0.7, 0, 0); const ly = makeLabel('y'); ly.position.set(0, 0.7, 0); const lz = makeLabel('z'); lz.position.set(0, 0, 0.7);
+                        group.add(lx, ly, lz);
+
+                        const sphereGeom = new THREE.SphereGeometry(0.05, 20, 16);
+                        const sphereMat = new THREE.MeshStandardMaterial({ color: 0xff4d4d });
+                        particle = new THREE.Mesh(sphereGeom, sphereMat); group.add(particle);
+
+                        autorotateBtn.addEventListener('click', () => { autoRotate = !autoRotate; autorotateBtn.classList.toggle('active'); });
+                        resetBtn.addEventListener('click', () => { group.rotation.set(0, 0, 0); });
+
+                        startTime = performance.now();
+                        window.addEventListener('resize', onResize);
+                        animate();
+                    }
+
+                    function animate() {
+                        requestAnimationFrame(animate);
+                        const t = (performance.now() - startTime) / 1000;
+                        const nx = Math.max(1, Math.min(5, +nx3.value));
+                        const ny = Math.max(1, Math.min(5, +ny3.value));
+                        const nz = Math.max(1, Math.min(5, +nz3.value));
+                        const x = Math.sin(nx * Math.PI * t * 0.4) * 0.45;
+                        const y = Math.sin(ny * Math.PI * t * 0.4 + 0.2) * 0.45;
+                        const z = Math.sin(nz * Math.PI * t * 0.4 + 0.5) * 0.45;
+                        if (particle) particle.position.set(x, y, z);
+                        if (autoRotate && group) group.rotation.y += 0.0035;
+                        if (renderer) renderer.render(scene, camera);
+                    }
+
+                    function onResize() { if (!renderer) return; const w = container.clientWidth, h = container.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+
+                    window._init3V2 = init3;
+                })();
+
+                /* UI switching */
+                (function () {
+                    const b1 = document.getElementById('btn-1d'), b2 = document.getElementById('btn-2d'), b3 = document.getElementById('btn-3d');
+                    const v1 = document.getElementById('view-1d'), v2 = document.getElementById('view-2d'), v3 = document.getElementById('view-3d');
+                    function clearActive() { document.querySelectorAll('.btn').forEach(x => x.classList.remove('active')); }
+                    b1.addEventListener('click', () => { clearActive(); b1.classList.add('active'); v1.style.display = 'block'; v2.style.display = 'none'; v3.style.display = 'none'; });
+                    b2.addEventListener('click', () => { clearActive(); b2.classList.add('active'); v1.style.display = 'none'; v2.style.display = 'block'; v3.style.display = 'none'; if (!window._surfaceInitialized) { window._surfaceInitialized = true; window._initSurfaceV2(); setTimeout(() => { window._buildSurfaceV2(); }, 120); } else { window._buildSurfaceV2(); } });
+                    b3.addEventListener('click', () => { clearActive(); b3.classList.add('active'); v1.style.display = 'none'; v2.style.display = 'none'; v3.style.display = 'block'; if (!window._threeInitializedV2) { window._threeInitializedV2 = true; window._init3V2(); } });
+                    b1.click();
+                })();
+
+            } // end startApp
+
+        })(); // wrapper
+    </script>
+</body>
+
+</html>

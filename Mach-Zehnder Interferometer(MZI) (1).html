@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mach–Zehnder Interferometer — Monochromatic Simulation</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:10px;background:#000;color:#fff}
+.wrap{max-width:1200px;margin:0 auto}
+h2{margin:6px 0 12px;font-size:18px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+label{font-size:13px}
+input[type=range]{vertical-align:middle}
+select,button{padding:6px;border-radius:6px;border:1px solid #cfcfcf;background:#222;color:#fff}
+button{cursor:pointer}
+canvas{width:100%;height:650px;border:1px solid #444;border-radius:10px;background:#000;display:block}
+.note{font-size:13px;color:#ccc;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h2>Mach–Zehnder Interferometer — Monochromatic Simulation (circular rings)</h2>
+<div class="controls">
+<label>Light:
+<select id="lightType">
+<option value="mono">Monochromatic</option>
+</select>
+</label>
+<label>Wavelength (nm) <span id="wlLab">600</span>
+<input id="wl" type="range" min="380" max="750" value="600" style="width:220px;margin-left:8px">
+</label>
+<label>M1 displacement (mm) <span id="p1Lab">0.000</span>
+<input id="p1" type="range" min="0" max="25.4" step="0.001" value="0" style="width:160px;margin-left:8px">
+</label>
+<label>M2 displacement (mm) <span id="p2Lab">0.000</span>
+<input id="p2" type="range" min="0" max="25.4" step="0.001" value="0" style="width:160px;margin-left:8px">
+</label>
+<label>Upper medium
+<select id="n1" style="margin-left:8px">
+<option value="1.0">Air (1.00)</option>
+<option value="1.33">Water (1.33)</option>
+<option value="1.47">Glycerin (1.47)</option>
+</select>
+</label>
+<label>Lower medium
+<select id="n2" style="margin-left:8px">
+<option value="1.0">Air (1.00)</option>
+<option value="1.33">Water (1.33)</option>
+<option value="1.47">Glycerin (1.47)</option>
+</select>
+</label>
+<div style="margin-left:auto;display:flex;gap:8px">
+<button id="playPause">Play</button>
+<button id="reset">Reset</button>
+</div>
+</div>
+<canvas id="c" width="1200" height="700"></canvas>
+<div class="note">
+Monochromatic circular fringes with complementary patterns in D1 and D2. M1 moves down (0-25.4mm), M2 moves up (0-25.4mm). Complementarity reverses every 2mm displacement.
+</div>
+</div>
+<script>
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d',{alpha:true});
+const W=canvas.width,H=canvas.height;
+
+const lightType=document.getElementById('lightType');
+const wl=document.getElementById('wl');
+const wlLab=document.getElementById('wlLab');
+const p1=document.getElementById('p1');
+const p2=document.getElementById('p2');
+const p1Lab=document.getElementById('p1Lab');
+const p2Lab=document.getElementById('p2Lab');
+const n1=document.getElementById('n1');
+const n2=document.getElementById('n2');
+const playPause=document.getElementById('playPause');
+const resetBtn=document.getElementById('reset');
+
+[wl,p1,p2,n1,n2].forEach(el=>el.addEventListener('input',draw));
+wl.addEventListener('input',()=>wlLab.textContent=wl.value);
+p1.addEventListener('input',()=>{p1Lab.textContent=parseFloat(p1.value).toFixed(3);});
+p2.addEventListener('input',()=>{p2Lab.textContent=parseFloat(p2.value).toFixed(3);});
+n1.addEventListener('change',()=>{draw();});
+n2.addEventListener('change',()=>{draw();});
+
+const src={x:80,y:H/2+210};
+const bs1={x:300,y:H/2+210};
+const m1_base={x:300,y:H/2-90};
+const m2_base={x:700,y:H/2+210};
+const bs2={x:700,y:H/2-90};
+const detD1={x:950,y:H/2-90};
+const detD2={x:700,y:110};
+
+let running=false;
+let globalPhase=0;
+
+playPause.onclick=()=>{running=!running;playPause.textContent=running?'Pause':'Play';if(running)requestAnimationFrame(loop);};
+resetBtn.onclick=()=>{p1.value=0;p2.value=0;n1.value='1.0';n2.value='1.0';globalPhase=0;draw();};
+
+function wavelengthToRGB(lambda){
+let r=0,g=0,b=0;
+if(lambda>=380&&lambda<440){r=-(lambda-440)/(440-380);g=0;b=1;}
+else if(lambda>=440&&lambda<490){r=0;g=(lambda-440)/(490-440);b=1;}
+else if(lambda>=490&&lambda<510){r=0;g=1;b=-(lambda-510)/(510-490);}
+else if(lambda>=510&&lambda<580){r=(lambda-510)/(580-510);g=1;b=0;}
+else if(lambda>=580&&lambda<645){r=1;g=-(lambda-645)/(645-580);b=0;}
+else if(lambda>=645&&lambda<=750){r=1;g=0;b=0;}
+const factor=1.2,gamma=0.9;
+r=Math.pow(Math.max(0,r*factor),gamma);
+g=Math.pow(Math.max(0,g*factor),gamma);
+b=Math.pow(Math.max(0,b*factor),gamma);
+return [r,g,b];
+}
+
+const REF_NM=500.0;
+function computeDelta(n,displacementMM){
+const pathChangeMM = 2 * displacementMM;
+const pathChangeNM = pathChangeMM * 1e6;
+return 2*Math.PI*n*pathChangeNM/REF_NM;
+}
+
+function drawBeam(points,color){
+for(let w=8;w>=1;w--){
+ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
+for(let i=1;i<points.length;i++)ctx.lineTo(points[i].x,points[i].y);
+ctx.lineWidth=w;
+ctx.strokeStyle=color.replace(/, *[0-9\.]+\)$/,`,${0.02+0.08*(w/8)})`);
+ctx.stroke();
+}
+ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
+for(let i=1;i<points.length;i++)ctx.lineTo(points[i].x,points[i].y);
+ctx.lineWidth=2;ctx.strokeStyle=color;ctx.stroke();
+}
+
+function drawRectangularBS(x, y, rotation) {
+ctx.save();
+ctx.translate(x, y);
+ctx.rotate(rotation * Math.PI / 180);
+ctx.fillStyle='#444';
+ctx.fillRect(-30, -8, 60, 16);
+ctx.strokeStyle='#888';
+ctx.lineWidth=2;
+ctx.strokeRect(-30, -8, 60, 16);
+const grad=ctx.createLinearGradient(-30,-8,30,8);
+grad.addColorStop(0,'rgba(100,150,200,0.3)');
+grad.addColorStop(0.5,'rgba(150,200,255,0.5)');
+grad.addColorStop(1,'rgba(100,150,200,0.3)');
+ctx.fillStyle=grad;
+ctx.fillRect(-30, -8, 60, 16);
+ctx.restore();
+}
+
+function getMirrorPositions() {
+const m1Displacement = parseFloat(p1.value);
+const m2Displacement = parseFloat(p2.value);
+const pixelsPerMM = 3;
+return {
+  m1: {x: m1_base.x, y: m1_base.y + m1Displacement * pixelsPerMM, tilt: 135},
+  m2: {x: m2_base.x, y: m2_base.y - m2Displacement * pixelsPerMM, tilt: -45}
+};
+}
+
+function drawElements(){
+ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+
+const sg=ctx.createRadialGradient(src.x,src.y,2,src.x,src.y,40);
+sg.addColorStop(0,'rgba(255,255,200,1)');
+sg.addColorStop(1,'rgba(255,220,80,0)');
+ctx.fillStyle=sg;ctx.beginPath();ctx.arc(src.x,src.y,16,0,2*Math.PI);ctx.fill();
+ctx.fillStyle='#fff';ctx.font='13px Arial';ctx.fillText('Source',src.x-26,src.y+35);
+
+drawRectangularBS(bs1.x, bs1.y, -45);
+drawRectangularBS(bs2.x, bs2.y, -45);
+ctx.fillStyle='#fff';
+ctx.fillText('BS1', bs1.x - 10, bs1.y + 35);
+ctx.fillText('BS2', bs2.x - 40, bs2.y - 25);
+
+
+const {m1: mirror1, m2: mirror2} = getMirrorPositions();
+ctx.save();
+ctx.translate(mirror1.x, mirror1.y);
+ctx.rotate(mirror1.tilt * Math.PI / 180);
+ctx.fillStyle='#777';
+ctx.fillRect(-40,-6,80,12);
+ctx.strokeStyle='#aaa';ctx.lineWidth=1;
+ctx.strokeRect(-40,-6,80,12);
+ctx.restore();
+ctx.save();
+ctx.translate(mirror2.x, mirror2.y);
+ctx.rotate(mirror2.tilt * Math.PI / 180);
+ctx.fillStyle='#777';
+ctx.fillRect(-40,-6,80,12);
+ctx.strokeStyle='#aaa';ctx.lineWidth=1;
+ctx.strokeRect(-40,-6,80,12);
+ctx.restore();
+ctx.fillStyle='#fff';
+ctx.fillText('M1',mirror1.x-25,mirror1.y+5);
+ctx.fillText('M2',mirror2.x+15,mirror2.y+5);
+
+ctx.fillStyle='#111';
+ctx.fillRect(detD1.x-26,detD1.y-26,52,52);
+ctx.fillRect(detD2.x-26,detD2.y-26,52,52);
+ctx.strokeStyle='#666';ctx.lineWidth=2;
+ctx.strokeRect(detD1.x-26,detD1.y-26,52,52);
+ctx.strokeRect(detD2.x-26,detD2.y-26,52,52);
+ctx.fillStyle='#fff';
+ctx.fillText('D1',detD1.x-10,detD1.y+6);
+ctx.fillText('D2',detD2.x-10,detD2.y+6);
+}
+
+function drawFringesAt(cx,cy,delta1,delta2,isD2){
+const lambda=parseFloat(wl.value);
+const rgb=wavelengthToRGB(lambda);
+const maxR=80,step=2.5,radialPhaseFactor=0.055;
+
+const m1Displacement = parseFloat(p1.value);
+const m2Displacement = parseFloat(p2.value);
+const m1Cycles = Math.floor(m1Displacement / 2);
+const m2Cycles = Math.floor(m2Displacement / 2);
+const totalCycles = m1Cycles + m2Cycles;
+const flipComplementarity = totalCycles % 2 === 1;
+const useD2Pattern = isD2 ? flipComplementarity : !flipComplementarity;
+
+for(let r=step;r<=maxR;r+=step){
+const phase=(delta2-delta1)*(REF_NM/lambda)+radialPhaseFactor*r+globalPhase;
+const I=useD2Pattern?Math.pow(Math.sin(phase/2),2):Math.pow(Math.cos(phase/2),2);
+const alpha=0.6*Math.min(1,I*1.3);
+const rr=Math.round(Math.min(1,rgb[0])*255);
+const gg=Math.round(Math.min(1,rgb[1])*255);
+const bb=Math.round(Math.min(1,rgb[2])*255);
+ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);
+ctx.strokeStyle=`rgba(${rr},${gg},${bb},${alpha})`;ctx.lineWidth=2;ctx.stroke();
+}
+}
+
+function draw(){
+drawElements();
+
+const {m1: mirror1, m2: mirror2} = getMirrorPositions();
+
+const p_src_bs1=[{x:src.x,y:src.y},{x:bs1.x-20,y:bs1.y}];
+const p_bs1_m1=[{x:bs1.x,y:bs1.y-14},{x:mirror1.x,y:mirror1.y+6}];
+const p_bs1_m2=[{x:bs1.x+14,y:bs1.y},{x:mirror2.x-6,y:mirror2.y}];
+const p_m1_bs2=[{x:mirror1.x+6,y:mirror1.y},{x:bs2.x-14,y:bs2.y}];
+const p_m2_bs2=[{x:mirror2.x,y:mirror2.y-6},{x:bs2.x,y:bs2.y+14}];
+const p_bs2_d1=[{x:bs2.x+14,y:bs2.y},{x:detD1.x-26,y:detD1.y}];
+const p_bs2_d2=[{x:bs2.x,y:bs2.y-14},{x:detD2.x,y:detD2.y+26}];
+
+const r=wavelengthToRGB(parseFloat(wl.value));
+const beamColor=`rgba(${Math.round(r[0]*255)},${Math.round(r[1]*255)},${Math.round(r[2]*255)},1)`;
+drawBeam(p_src_bs1,beamColor);
+drawBeam(p_bs1_m1,beamColor);
+drawBeam(p_bs1_m2,beamColor);
+drawBeam(p_m1_bs2,beamColor);
+drawBeam(p_m2_bs2,beamColor);
+drawBeam(p_bs2_d1,beamColor);
+drawBeam(p_bs2_d2,beamColor);
+
+const delta1=computeDelta(parseFloat(n1.value),parseFloat(p1.value));
+const delta2=computeDelta(parseFloat(n2.value),parseFloat(p2.value));
+
+drawFringesAt(detD1.x,detD1.y,delta1,delta2,false);
+drawFringesAt(detD2.x,detD2.y,delta1,delta2,true);
+}
+
+function loop(ts){if(!running)return;globalPhase+=0.02*(0.6+0.8*Math.sin(ts*0.0012));draw();requestAnimationFrame(loop);}
+
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Simulations | QuantumLab</title>
+    <meta name="description"
+        content="Browse our collection of interactive quantum physics simulations. Explore quantum mechanics, optics, and particle physics experiments.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="simulations-page">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <img src="imgs/Logo-sret.png" alt="QuantumLab Logo" style="height: 50px; width: auto;">
+            </a>
+
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="simulations.html" class="nav-link active">Simulations</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="#research" class="nav-link">Research</a>
+            </div>
+
+            <div class="nav-actions">
+                <button class="btn-icon search-btn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2" />
+                        <path d="M14 14L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="page-title">Quantum Simulations</h1>
+                <p class="page-subtitle">39 interactive experiments • Real-time visualization • Research-grade accuracy
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filters & Controls -->
+    <section class="controls-bar">
+        <div class="container">
+            <div class="controls-wrapper">
+                <!-- Search -->
+                <div class="search-box">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2" />
+                        <path d="M14 14L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search quantum experiments...">
+                </div>
+
+                <!-- Filter Chips -->
+                <div class="filter-chips">
+                    <button class="chip active" data-category="all">All</button>
+                    <button class="chip" data-category="quantum">🧠 Quantum Mechanics</button>
+                    <button class="chip" data-category="optics">🔦 Quantum Optics</button>
+                    <button class="chip" data-category="particle">⚛️ Particle Physics</button>
+                    <button class="chip" data-category="spectroscopy">🌈 Spectroscopy</button>
+                </div>
+
+                <!-- View Toggle -->
+                <div class="view-controls">
+                    <button class="view-btn active" data-view="grid">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <rect x="2" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5" />
+                            <rect x="11" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5" />
+                            <rect x="2" y="11" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5" />
+                            <rect x="11" y="11" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                    </button>
+                    <button class="view-btn" data-view="list">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <rect x="2" y="3" width="16" height="3" rx="1" stroke="currentColor" stroke-width="1.5" />
+                            <rect x="2" y="9" width="16" height="3" rx="1" stroke="currentColor" stroke-width="1.5" />
+                            <rect x="2" y="15" width="16" height="3" rx="1" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Simulations Grid -->
+    <section class="simulations-section">
+        <div class="container">
+            <div class="simulations-grid" id="simulationsGrid">
+
+                <!-- Stern-Gerlach Experiment -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="24" stroke="currentColor" stroke-width="2" opacity="0.3" />
+                                <circle cx="32" cy="20" r="4" fill="currentColor" />
+                                <circle cx="32" cy="44" r="4" fill="currentColor" />
+                                <path d="M32 24L32 40" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">Experimental</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Stern-Gerlach Experiment</h3>
+                        <p class="sim-subtitle">Quantum spin measurement & spatial separation</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                            <span class="tech-badge">JS</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('STERN GERLACH.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('STERN GERLACH.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mach-Zehnder Interferometer -->
+                <div class="sim-card" data-category="optics">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder optics-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M8 32H56" stroke="currentColor" stroke-width="2" />
+                                <path d="M32 8L56 32L32 56" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                                <circle cx="32" cy="32" r="6" fill="currentColor" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Mach-Zehnder Interferometer</h3>
+                        <p class="sim-subtitle">Quantum interference & wave-particle duality</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">WebGL</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary"
+                            onclick="openSimulation('Mach-Zehnder Interferometer(MZI) (1).html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon"
+                            onclick="openFullscreen('Mach-Zehnder Interferometer(MZI) (1).html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Josephson Junction -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="16" y="24" width="12" height="16" stroke="currentColor" stroke-width="2" />
+                                <rect x="36" y="24" width="12" height="16" stroke="currentColor" stroke-width="2" />
+                                <path d="M28 32H36" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-advanced">Advanced</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Josephson Junction</h3>
+                        <p class="sim-subtitle">Superconducting quantum tunneling effect</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('josephson junction.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('josephson junction.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Compton Effect -->
+                <div class="sim-card" data-category="optics">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="24" cy="32" r="8" stroke="currentColor" stroke-width="2" />
+                                <circle cx="40" cy="32" r="8" stroke="currentColor" stroke-width="2" />
+                                <path d="M32 32H36" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Compton Effect</h3>
+                        <p class="sim-subtitle">Photon-electron scattering & energy transfer</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Physics Engine</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Compton Effect.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('Compton Effect.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Absorption Spectrum -->
+                <div class="sim-card" data-category="spectroscopy">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder spectroscopy-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="16" y="24" width="4" height="16" fill="currentColor" opacity="0.4" />
+                                <rect x="24" y="20" width="4" height="24" fill="currentColor" opacity="0.6" />
+                                <rect x="32" y="16" width="4" height="32" fill="currentColor" opacity="0.8" />
+                                <rect x="40" y="22" width="4" height="20" fill="currentColor" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Absorption Spectrum</h3>
+                        <p class="sim-subtitle">Atomic energy levels & photon absorption</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">SVG</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Absorption_Spectrum.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('Absorption_Spectrum.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Multi-Slit Diffraction -->
+                <div class="sim-card" data-category="optics quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder optics-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M20 16V48M28 16V48M36 16V48M44 16V48" stroke="currentColor" stroke-width="2" />
+                                <circle cx="32" cy="32" r="16" stroke="currentColor" stroke-width="1" opacity="0.3" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Multi-Slit Diffraction Simulator</h3>
+                        <p class="sim-subtitle">Wave interference patterns & quantum behavior</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary"
+                            onclick="openSimulation('Multi-Slit Diffraction Simulator.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon"
+                            onclick="openFullscreen('Multi-Slit Diffraction Simulator.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantum Doppler Effect -->
+                <div class="sim-card" data-category="optics">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="8" fill="currentColor" />
+                                <circle cx="32" cy="32" r="16" stroke="currentColor" stroke-width="2" opacity="0.6" />
+                                <circle cx="32" cy="32" r="24" stroke="currentColor" stroke-width="2" opacity="0.3" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Quantum Doppler Effect</h3>
+                        <p class="sim-subtitle">Relativistic frequency shift in quantum systems</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">WebGL</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('QUANTUM DOPPLER EFFECT.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('QUANTUM DOPPLER EFFECT.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Emission Spectrum -->
+                <div class="sim-card" data-category="spectroscopy">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder spectroscopy-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="12" stroke="currentColor" stroke-width="2" />
+                                <path d="M32 20L36 16M32 44L36 48M20 32L16 36M44 32L48 36" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Emission Spectrum (Hydrogen / Water)</h3>
+                        <p class="sim-subtitle">Photon emission & spectral line formation</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('emission_spectrum_Atom.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('emission_spectrum_Atom.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantum Tunneling -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="28" y="16" width="8" height="32" stroke="currentColor" stroke-width="2" />
+                                <circle cx="16" cy="32" r="4" fill="currentColor" />
+                                <circle cx="48" cy="32" r="4" fill="currentColor" opacity="0.5" />
+                                <path d="M20 32H44" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Quantum Tunneling (Final)</h3>
+                        <p class="sim-subtitle">Barrier penetration & probability waves</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('quantum_tunneling-final.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantum Tunneling -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="28" y="16" width="8" height="32" stroke="currentColor" stroke-width="2" />
+                                <circle cx="16" cy="32" r="4" fill="currentColor" />
+                                <circle cx="48" cy="32" r="4" fill="currentColor" opacity="0.5" />
+                                <path d="M20 32H44" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Quantum Tunneling</h3>
+                        <p class="sim-subtitle">Classical vs Quantum tunneling comparison</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Quantum_Tunneling.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('Quantum_Tunneling.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Aharonov–Bohm Effect -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="20" stroke="currentColor" stroke-width="2" />
+                                <circle cx="32" cy="32" r="4" fill="currentColor" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Aharonov–Bohm Effect</h3>
+                        <p class="sim-subtitle">Phase shift & magnetic flux</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Aharonov_Bohm_Effect.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('Aharonov_Bohm_Effect.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Brownian Motion -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="2" fill="currentColor" />
+                                <path d="M32 32L40 20L50 24L56 16" stroke="currentColor" stroke-width="2" />
+                                <path d="M32 32L20 40L10 36L4 44" stroke="currentColor" stroke-width="2"
+                                    opacity="0.5" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Brownian Motion</h3>
+                        <p class="sim-subtitle">Stochastic particle process</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">JS</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Brownian_Motion.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('Brownian_Motion.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hahn Spin Echo -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <ellipse cx="32" cy="32" rx="20" ry="10" stroke="currentColor" stroke-width="2" />
+                                <path d="M32 12V52" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Hahn Spin Echo</h3>
+                        <p class="sim-subtitle">NMR spin refocusing</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('HAHN_SPIN_ECHO_CODE_2.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('HAHN_SPIN_ECHO_CODE_2.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Particle in a Box -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="16" y="16" width="32" height="32" stroke="currentColor" stroke-width="2" />
+                                <path d="M20 32C24 24 40 24 44 32" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Particle in a Box</h3>
+                        <p class="sim-subtitle">Quantum confinement probability</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('particle_in_a_box.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('particle_in_a_box.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Photoelectric Effect -->
+                <div class="sim-card" data-category="optics">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M16 48L32 32L48 16" stroke="currentColor" stroke-width="2"
+                                    stroke-dasharray="2 2" />
+                                <circle cx="32" cy="32" r="4" fill="currentColor" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Photoelectric Effect</h3>
+                        <p class="sim-subtitle">Light-matter interaction</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Photoelectric_Effect.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('Photoelectric_Effect.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Three Metals -->
+                <div class="sim-card" data-category="optics">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="10" y="40" width="10" height="10" fill="currentColor" opacity="0.3" />
+                                <rect x="27" y="40" width="10" height="10" fill="currentColor" opacity="0.6" />
+                                <rect x="44" y="40" width="10" height="10" fill="currentColor" opacity="0.9" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Photoelectric Effect Simulator (3 Metals)</h3>
+                        <p class="sim-subtitle">Work function comparison</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary"
+                            onclick="openSimulation('Photoelectric_Effect_Simulator______3_Metals_Comparison.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon"
+                            onclick="openFullscreen('Photoelectric_Effect_Simulator______3_Metals_Comparison.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Rydberg Blockade -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="20" cy="32" r="10" stroke="currentColor" stroke-dasharray="2 2" />
+                                <circle cx="44" cy="32" r="10" stroke="currentColor" stroke-dasharray="2 2" />
+                                <path d="M20 32H44" stroke="currentColor" stroke-width="1" opacity="0.5" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Rydberg Blockade</h3>
+                        <p class="sim-subtitle">Atomic dipole interaction</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Rydberg_Blockade.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon" onclick="openFullscreen('Rydberg_Blockade.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantum Brownian Motion -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="6" fill="currentColor" />
+                                <path d="M32 16L32 24" stroke="currentColor" stroke-width="2" />
+                                <path d="M32 40L32 48" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Quantum Brownian Motion (Particle in Optical Trap)</h3>
+                        <p class="sim-subtitle">Particle in Optical Trap</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary"
+                            onclick="openSimulation('Quantum_Brownian_Motion___Particle_in_Optical_Trap.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                        <button class="btn-action btn-icon"
+                            onclick="openFullscreen('Quantum_Brownian_Motion___Particle_in_Optical_Trap.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path
+                                    d="M2 2H6M2 2V6M2 2L6 6M14 2H10M14 2V6M14 2L10 6M2 14H6M2 14V10M2 14L6 10M14 14H10M14 14V10M14 14L10 10"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Single Slit Diffraction -->
+                <div class="sim-card" data-category="optics quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder optics-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M24 16V48M40 16V48" stroke="currentColor" stroke-width="4" />
+                                <path d="M4 32H20M44 32H60" stroke="currentColor" stroke-width="2"
+                                    stroke-dasharray="4 4" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Uncertainty Principle (Single Slit)</h3>
+                        <p class="sim-subtitle">Uncertainty principle & wave diffraction</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">Canvas</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Single Slit Diffraction.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Aperture Slit (Microscope) -->
+                <div class="sim-card" data-category="optics quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder optics-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="12" stroke="currentColor" stroke-width="2" />
+                                <circle cx="32" cy="32" r="24" stroke="currentColor" stroke-width="1"
+                                    stroke-dasharray="4 4" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Uncertainty Principle (Aperture Slit)</h3>
+                        <p class="sim-subtitle">Resolution limit & Heisenberg microscope</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">JS</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Aperture Slit.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ramsauer–Townsend Effect -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="8" fill="currentColor" />
+                                <path d="M4 32H20M44 32H60" stroke="currentColor" stroke-width="2" />
+                                <path d="M20 32C24 20 40 20 44 32" stroke="currentColor" stroke-width="2"
+                                    stroke-dasharray="4 2" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-advanced">Advanced</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Ramsauer–Townsend Effect</h3>
+                        <p class="sim-subtitle">Scattering cross-section & wave nature</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Physics</span>
+                            <span class="tech-badge">WebGL</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary"
+                            onclick="openSimulation('Ramsauer–Townsend Effect.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Rabi Oscillation -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path
+                                    d="M10 32C10 32 15 12 32 12C49 12 54 32 54 32C54 32 49 52 32 52C15 52 10 32 10 32Z"
+                                    stroke="currentColor" stroke-width="2" />
+                                <circle cx="32" cy="32" r="6" fill="currentColor" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Rabi Oscillation</h3>
+                        <p class="sim-subtitle">Two-level system & coherent control</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Quantum</span>
+                            <span class="tech-badge">Math</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('rabi_oscillation.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kronig–Penney Model -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M8 48V32H16V48H24V32H32V48H40V32H48V48H56V32" stroke="currentColor"
+                                    stroke-width="2" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Kronig–Penney Model</h3>
+                        <p class="sim-subtitle">Band structure in periodic potentials</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Solid State</span>
+                            <span class="tech-badge">Simulation</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('kronig-penney.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bloch Oscillation -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M8 40Q16 24 24 40T40 40T56 40" stroke="currentColor" stroke-width="2" />
+                                <circle cx="24" cy="40" r="4" fill="currentColor" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Bloch Oscillation</h3>
+                        <p class="sim-subtitle">Particle behavior in periodic lattices</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Lattice</span>
+                            <span class="tech-badge">JS</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Bloch Oscillation.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Antimatter -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="12" stroke="currentColor" stroke-width="2" />
+                                <circle cx="32" cy="32" r="6" fill="currentColor" />
+                                <path d="M10 32H20M44 32H54" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Antimatter</h3>
+                        <p class="sim-subtitle">Matter-antimatter annihilation</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Particle</span>
+                            <span class="tech-badge">JS</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Antimatter.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Blackbody Radiation -->
+                <div class="sim-card" data-category="spectroscopy">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder spectroscopy-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M10 50Q32 10 54 50" stroke="currentColor" stroke-width="3" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Blackbody Radiation</h3>
+                        <p class="sim-subtitle">Planck's law & thermal emission</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Thermal</span>
+                            <span class="tech-badge">Math</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Blackbody Radiation.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bloch Sphere -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="20" stroke="currentColor" stroke-width="2" />
+                                <ellipse cx="32" cy="32" rx="20" ry="8" stroke="currentColor" stroke-width="1"
+                                    opacity="0.5" />
+                                <path d="M32 12V52" stroke="currentColor" stroke-width="1" />
+                                <path d="M32 32L46 18" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Bloch Sphere</h3>
+                        <p class="sim-subtitle">Qubit state visualization</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Computing</span>
+                            <span class="tech-badge">3D</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Bloch Sphere.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Atomic Emission -->
+                <div class="sim-card" data-category="spectroscopy">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder spectroscopy-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="10" y="20" width="44" height="24" stroke="currentColor" stroke-width="2" />
+                                <path d="M20 20V44M32 20V44M44 20V44" stroke="currentColor" stroke-width="1"
+                                    opacity="0.5" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Atomic Emission</h3>
+                        <p class="sim-subtitle">Spectral line series</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">HTML5</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Atomic Emission.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Davisson–Germer Experiment -->
+                <div class="sim-card" data-category="particle">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M10 32H32M32 32L54 10M32 32L54 54" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Davisson–Germer Experiment</h3>
+                        <p class="sim-subtitle">Electron diffraction experiment</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">History</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary"
+                            onclick="openSimulation('Davisson–Germer Experiment.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Double Barrier Resonant Tunneling (Placeholder) -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="20" y="16" width="6" height="32" fill="currentColor" opacity="0.5" />
+                                <rect x="38" y="16" width="6" height="32" fill="currentColor" opacity="0.5" />
+                                <path d="M10 40H20M26 40H38M44 40H54" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Double Barrier Resonant Tunneling</h3>
+                        <p class="sim-subtitle">Double barrier transmission</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Solid State</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary"
+                            onclick="openSimulation('Double Barrier Resonant Tunneling.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- De Broglie’s Wave–Particle Duality -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M10 32Q21 12 32 32T54 32" stroke="currentColor" stroke-width="2" />
+                                <circle cx="32" cy="32" r="4" fill="currentColor" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">De Broglie’s Wave–Particle Duality</h3>
+                        <p class="sim-subtitle">Wave-particle nature of matter</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Fundamental</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary"
+                            onclick="openSimulation('De Broglie’s Wave–Particle Duality.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hydrogen Atom -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="4" fill="currentColor" />
+                                <circle cx="32" cy="32" r="16" stroke="currentColor" stroke-width="1" opacity="0.5" />
+                                <circle cx="32" cy="32" r="24" stroke="currentColor" stroke-width="1" opacity="0.3" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Hydrogen Atom</h3>
+                        <p class="sim-subtitle">Bohr model & orbitals</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Atomic</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Hydrogen Atom.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Photon Collision -->
+                <div class="sim-card" data-category="particle">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M10 10L32 32M10 54L32 32M32 32L54 32" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Photon Collision</h3>
+                        <p class="sim-subtitle">High-energy particle impacts</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">High Energy</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Photon Collision.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantum Cavity -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder optics-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M16 16V48M48 16V48" stroke="currentColor" stroke-width="3" />
+                                <path d="M16 32H48" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Quantum Cavity</h3>
+                        <p class="sim-subtitle">Cavity QED & photon confinement</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Optics</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Quantum Cavity.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Positron Emission -->
+                <div class="sim-card" data-category="particle">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <circle cx="32" cy="32" r="10" stroke="currentColor" stroke-width="2" />
+                                <path d="M32 32L50 14" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Positron Emission</h3>
+                        <p class="sim-subtitle">Beta-plus decay & PET physics</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Nuclear</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Positron Emission.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantum Dot -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="22" y="22" width="20" height="20" stroke="currentColor" stroke-width="2" />
+                                <circle cx="32" cy="32" r="4" fill="currentColor" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Quantum Dot</h3>
+                        <p class="sim-subtitle">Artificial atoms & confinement</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Nano</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Quantum Dot.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantum Gates -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder quantum-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="20" y="20" width="24" height="24" fill="currentColor" opacity="0.2" />
+                                <text x="26" y="38" fill="currentColor" font-family="monospace" font-weight="bold"
+                                    font-size="20">H</text>
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Quantum Gates</h3>
+                        <p class="sim-subtitle">Hadamard, CNOT & Phase gates</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Computing</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Quantum Gates.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantum Rocket -->
+                <div class="sim-card" data-category="quantum">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder particle-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M32 10L22 30V50H42V30L32 10Z" stroke="currentColor" stroke-width="2" />
+                                <path d="M32 50V60" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Quantum Rocket</h3>
+                        <p class="sim-subtitle">Photon propulsion & momentum</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Space</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Quantum Rocket.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Raman Scattering -->
+                <div class="sim-card" data-category="spectroscopy">
+                    <div class="sim-preview">
+                        <div class="preview-placeholder spectroscopy-bg">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M10 32H32M32 32L54 16M32 32L54 48" stroke="currentColor" stroke-width="2" />
+                                <circle cx="32" cy="32" r="4" fill="currentColor" />
+                            </svg>
+                        </div>
+                        <div class="sim-badges">
+                            <span class="badge badge-new">New</span>
+                        </div>
+                    </div>
+                    <div class="sim-content">
+                        <h3 class="sim-title">Raman Scattering</h3>
+                        <p class="sim-subtitle">Inelastic scattering of photons</p>
+                        <div class="sim-tech">
+                            <span class="tech-badge">Molecular</span>
+                        </div>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="btn-action btn-primary" onclick="openSimulation('Raman Scattering.html')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 2L12 8L4 14V2Z" fill="currentColor" />
+                            </svg>
+                            <span>Launch</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Simulation Modal -->
+    <div id="simulationModal" class="modal">
+        <div class="modal-overlay" onclick="closeSimulation()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Simulation</h3>
+                <div class="modal-actions">
+                    <button class="btn-icon" onclick="toggleFullscreenModal()">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path
+                                d="M2 2H6M2 2V6M2 2L6 6M18 2H14M18 2V6M18 2L14 6M2 18H6M2 18V14M2 18L6 14M18 18H14M18 18V14M18 18L14 14"
+                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <button class="btn-icon" onclick="closeSimulation()">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M4 4L16 16M16 4L4 16" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <iframe id="simulationFrame" src="" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="imgs/Logo-sret.png" alt="QuantumLab Logo"
+                        style="height: 60px; width: auto; opacity: 0.9;">
+                </div>
+                <p class="footer-tagline">Advancing quantum education through interactive simulation</p>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="#privacy">Privacy</a>
+                    <a href="#terms">Terms</a>
+                    <a href="#contact">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

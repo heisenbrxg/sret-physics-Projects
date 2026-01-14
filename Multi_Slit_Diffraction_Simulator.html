@@ -1,0 +1,578 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Slit Diffraction Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e3c72;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .simulation-area {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            background: #000;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            display: block;
+            border-radius: 5px;
+            background: #000;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .value-display {
+            color: #1e3c72;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1e3c72;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #2a5298;
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1e3c72;
+            cursor: pointer;
+            border: none;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #ccc;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #4CAF50;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        .laser-status {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .laser-status.off {
+            color: #999;
+        }
+
+        .laser-status.on {
+            color: #ff0000;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+
+        .graph-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #graphCanvas {
+            display: block;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔬 Multi-Slit Diffraction Simulator</h1>
+
+        <div class="simulation-area">
+            <div class="canvas-container">
+                <canvas id="diffractionCanvas" width="700" height="500"></canvas>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <div class="toggle-container">
+                    <span class="laser-status off" id="laserStatus">Laser: OFF</span>
+                    <div class="toggle-switch" id="laserToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Number of Slits: <span class="value-display" id="slitValue">2</span>
+                </label>
+                <input type="range" id="slitCount" min="1" max="200" value="2">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Slit Width: <span class="value-display" id="widthValue">0.5 mm</span>
+                </label>
+                <input type="range" id="slitWidth" min="1" max="20" value="5" step="1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Slit Separation: <span class="value-display" id="separationValue">1.0 mm</span>
+                </label>
+                <input type="range" id="slitSeparation" min="5" max="50" value="10" step="1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Wavelength: <span class="value-display" id="wavelengthValue">650 nm (Red)</span>
+                </label>
+                <input type="range" id="wavelength" min="380" max="750" value="650">
+            </div>
+
+            <div class="graph-container">
+                <canvas id="graphCanvas" width="400" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('diffractionCanvas');
+        const ctx = canvas.getContext('2d');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+
+        let laserOn = false;
+        let numSlits = 2;
+        let slitWidth = 0.5; // mm
+        let slitSeparation = 1.0; // mm
+        let wavelength = 650; // nm
+
+        const laserToggle = document.getElementById('laserToggle');
+        const laserStatus = document.getElementById('laserStatus');
+        const slitCountInput = document.getElementById('slitCount');
+        const slitWidthInput = document.getElementById('slitWidth');
+        const slitSeparationInput = document.getElementById('slitSeparation');
+        const wavelengthInput = document.getElementById('wavelength');
+
+        // Toggle laser
+        laserToggle.addEventListener('click', () => {
+            laserOn = !laserOn;
+            laserToggle.classList.toggle('active');
+            if (laserOn) {
+                laserStatus.textContent = 'Laser: ON';
+                laserStatus.classList.remove('off');
+                laserStatus.classList.add('on');
+            } else {
+                laserStatus.textContent = 'Laser: OFF';
+                laserStatus.classList.remove('on');
+                laserStatus.classList.add('off');
+            }
+            draw();
+        });
+
+        // Update controls
+        slitCountInput.addEventListener('input', (e) => {
+            numSlits = parseInt(e.target.value);
+            document.getElementById('slitValue').textContent = numSlits;
+            draw();
+        });
+
+        slitWidthInput.addEventListener('input', (e) => {
+            slitWidth = parseInt(e.target.value) / 10;
+            document.getElementById('widthValue').textContent = slitWidth.toFixed(1) + ' mm';
+            draw();
+        });
+
+        slitSeparationInput.addEventListener('input', (e) => {
+            slitSeparation = parseInt(e.target.value) / 10;
+            document.getElementById('separationValue').textContent = slitSeparation.toFixed(1) + ' mm';
+            draw();
+        });
+
+        wavelengthInput.addEventListener('input', (e) => {
+            wavelength = parseInt(e.target.value);
+            const color = wavelengthToColor(wavelength);
+            document.getElementById('wavelengthValue').textContent = wavelength + ' nm (' + color + ')';
+            draw();
+        });
+
+        function wavelengthToColor(wl) {
+            if (wl < 450) return 'Violet';
+            if (wl < 495) return 'Blue';
+            if (wl < 570) return 'Green';
+            if (wl < 590) return 'Yellow';
+            if (wl < 620) return 'Orange';
+            return 'Red';
+        }
+
+        function wavelengthToRGB(wl) {
+            let r, g, b;
+            if (wl >= 380 && wl < 440) {
+                r = -(wl - 440) / (440 - 380);
+                g = 0;
+                b = 1;
+            } else if (wl >= 440 && wl < 490) {
+                r = 0;
+                g = (wl - 440) / (490 - 440);
+                b = 1;
+            } else if (wl >= 490 && wl < 510) {
+                r = 0;
+                g = 1;
+                b = -(wl - 510) / (510 - 490);
+            } else if (wl >= 510 && wl < 580) {
+                r = (wl - 510) / (580 - 510);
+                g = 1;
+                b = 0;
+            } else if (wl >= 580 && wl < 645) {
+                r = 1;
+                g = -(wl - 645) / (645 - 580);
+                b = 0;
+            } else if (wl >= 645 && wl <= 750) {
+                r = 1;
+                g = 0;
+                b = 0;
+            } else {
+                r = 0;
+                g = 0;
+                b = 0;
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        function calculateIntensity(x, screenDist = 1000) {
+            const k = 2 * Math.PI / (wavelength * 1e-6); // wave number
+            const beta = k * slitWidth * 1e-3 * x / screenDist;
+            const gamma = k * slitSeparation * 1e-3 * x / screenDist;
+
+            let singleSlitTerm = 1;
+            if (Math.abs(beta) > 0.001) {
+                singleSlitTerm = Math.sin(beta) / beta;
+            }
+
+            let multiSlitTerm = 1;
+            if (numSlits > 1 && Math.abs(gamma) > 0.001) {
+                const numerator = Math.sin(numSlits * gamma);
+                const denominator = Math.sin(gamma);
+                multiSlitTerm = numerator / denominator;
+            }
+
+            const intensity = Math.pow(singleSlitTerm * multiSlitTerm, 2);
+            return intensity / (numSlits * numSlits);
+        }
+
+        function draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw laser source
+            const laserX = 50;
+            const laserY = canvas.height / 2;
+
+            ctx.fillStyle = laserOn ? '#ff0000' : '#660000';
+            ctx.beginPath();
+            ctx.arc(laserX, laserY, 15, 0, 2 * Math.PI);
+            ctx.fill();
+
+            if (laserOn) {
+                const gradient = ctx.createRadialGradient(laserX, laserY, 5, laserX, laserY, 25);
+                gradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
+                gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(laserX, laserY, 25, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            // Draw slits
+            const slitScreenX = 250;
+            const totalHeight = numSlits * slitWidth + (numSlits - 1) * slitSeparation;
+            const startY = canvas.height / 2 - totalHeight / 2 * 30;
+
+            ctx.fillStyle = '#333';
+            ctx.fillRect(slitScreenX - 10, 0, 20, canvas.height);
+
+            for (let i = 0; i < numSlits; i++) {
+                const slitY = startY + i * (slitWidth + slitSeparation) * 30;
+                ctx.fillStyle = '#000';
+                ctx.fillRect(slitScreenX - 10, slitY, 20, slitWidth * 30);
+            }
+
+            // Draw laser beam
+            if (laserOn) {
+                const rgb = wavelengthToRGB(wavelength);
+                ctx.strokeStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.6)`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(laserX + 15, laserY);
+                ctx.lineTo(slitScreenX - 10, laserY);
+                ctx.stroke();
+
+                // Draw diffraction rays
+                ctx.lineWidth = 1;
+                for (let i = 0; i < numSlits; i++) {
+                    const slitY = startY + i * (slitWidth + slitSeparation) * 30 + (slitWidth * 30) / 2;
+                    for (let angle = -30; angle <= 30; angle += 5) {
+                        const rad = angle * Math.PI / 180;
+                        const endX = slitScreenX + 200;
+                        const endY = slitY + Math.tan(rad) * 200;
+
+                        ctx.strokeStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.1)`;
+                        ctx.beginPath();
+                        ctx.moveTo(slitScreenX + 10, slitY);
+                        ctx.lineTo(endX, endY);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Draw diffraction pattern
+            if (laserOn) {
+                const patternX = 550;
+                const patternWidth = 120;
+
+                ctx.fillStyle = '#444';
+                ctx.fillRect(patternX, 0, patternWidth, canvas.height);
+
+                const rgb = wavelengthToRGB(wavelength);
+
+                for (let y = 0; y < canvas.height; y++) {
+                    const screenPos = (y - canvas.height / 2) * 2;
+                    const intensity = calculateIntensity(screenPos);
+                    const brightness = Math.min(255, intensity * 255);
+
+                    ctx.fillStyle = `rgb(${rgb[0] * brightness / 255}, ${rgb[1] * brightness / 255}, ${rgb[2] * brightness / 255})`;
+                    ctx.fillRect(patternX, y, patternWidth, 1);
+                }
+            }
+
+            // Labels
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px Arial';
+            ctx.fillText('Laser', laserX - 15, laserY + 35);
+            ctx.fillText('Slits', slitScreenX - 15, 30);
+            ctx.fillText('Pattern', 560, 30);
+
+            // Draw graph
+            drawGraph();
+        }
+
+        function drawGraph() {
+            const padding = 40;
+            const graphWidth = graphCanvas.width - 2 * padding;
+            const graphHeight = graphCanvas.height - 2 * padding;
+
+            // Clear canvas
+            graphCtx.fillStyle = '#f8f9fa';
+            graphCtx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+            // Draw axes
+            graphCtx.strokeStyle = '#333';
+            graphCtx.lineWidth = 2;
+            graphCtx.beginPath();
+            graphCtx.moveTo(padding, padding);
+            graphCtx.lineTo(padding, graphCanvas.height - padding);
+            graphCtx.lineTo(graphCanvas.width - padding, graphCanvas.height - padding);
+            graphCtx.stroke();
+
+            // Labels
+            graphCtx.fillStyle = '#333';
+            graphCtx.font = 'bold 12px Arial';
+            graphCtx.textAlign = 'center';
+            graphCtx.fillText('Angular Position (degrees)', graphCanvas.width / 2, graphCanvas.height - 5);
+
+            graphCtx.save();
+            graphCtx.translate(15, graphCanvas.height / 2);
+            graphCtx.rotate(-Math.PI / 2);
+            graphCtx.fillText('Intensity', 0, 0);
+            graphCtx.restore();
+
+            if (!laserOn) {
+                graphCtx.fillStyle = '#999';
+                graphCtx.font = '14px Arial';
+                graphCtx.textAlign = 'center';
+                graphCtx.fillText('Turn on laser to see intensity pattern', graphCanvas.width / 2, graphCanvas.height / 2);
+                return;
+            }
+
+            // Calculate intensity data
+            const numPoints = 400;
+            const angleRange = 15; // degrees
+            let maxIntensity = 0;
+            const intensityData = [];
+
+            for (let i = 0; i < numPoints; i++) {
+                const angle = (i / numPoints - 0.5) * 2 * angleRange;
+                const angleRad = angle * Math.PI / 180;
+                const screenPos = Math.tan(angleRad) * 1000;
+                const intensity = calculateIntensity(screenPos);
+                intensityData.push({ angle, intensity });
+                maxIntensity = Math.max(maxIntensity, intensity);
+            }
+
+            // Draw grid lines
+            graphCtx.strokeStyle = '#ddd';
+            graphCtx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (graphHeight * i) / 5;
+                graphCtx.beginPath();
+                graphCtx.moveTo(padding, y);
+                graphCtx.lineTo(graphCanvas.width - padding, y);
+                graphCtx.stroke();
+            }
+
+            // Draw intensity curve
+            const rgb = wavelengthToRGB(wavelength);
+            graphCtx.strokeStyle = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+            graphCtx.lineWidth = 2;
+            graphCtx.beginPath();
+
+            for (let i = 0; i < numPoints; i++) {
+                const x = padding + (i / numPoints) * graphWidth;
+                const normalizedIntensity = intensityData[i].intensity / maxIntensity;
+                const y = graphCanvas.height - padding - normalizedIntensity * graphHeight;
+
+                if (i === 0) {
+                    graphCtx.moveTo(x, y);
+                } else {
+                    graphCtx.lineTo(x, y);
+                }
+            }
+            graphCtx.stroke();
+
+            // Fill under curve
+            graphCtx.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.2)`;
+            graphCtx.lineTo(graphCanvas.width - padding, graphCanvas.height - padding);
+            graphCtx.lineTo(padding, graphCanvas.height - padding);
+            graphCtx.closePath();
+            graphCtx.fill();
+
+            // X-axis labels
+            graphCtx.fillStyle = '#333';
+            graphCtx.font = '10px Arial';
+            graphCtx.textAlign = 'center';
+            for (let i = -angleRange; i <= angleRange; i += 5) {
+                const x = padding + ((i + angleRange) / (2 * angleRange)) * graphWidth;
+                graphCtx.fillText(i + '°', x, graphCanvas.height - padding + 15);
+            }
+
+            // Y-axis labels
+            graphCtx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const y = graphCanvas.height - padding - (graphHeight * i) / 5;
+                const value = ((i / 5) * 100).toFixed(0);
+                graphCtx.fillText(value + '%', padding - 5, y + 4);
+            }
+        }
+
+        draw();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Dot Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            margin: 0;
+            background: #fff;
+            color: #000;
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #222;
+        }
+
+        p {
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        canvas {
+            border: 1px solid #aaa;
+            background-color: #fff;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type=range] {
+            width: 300px;
+        }
+
+        .output {
+            font-weight: bold;
+            font-family: monospace;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Quantum Dot Simulation</h1>
+    <p>Adjust the size of the quantum dot to observe quantum confinement effects.</p>
+
+    <div class="container">
+        <canvas id="dotCanvas" width="300" height="300"></canvas>
+
+        <div class="slider-group">
+            <label>Quantum Dot Size: <span id="dotSizeValue">5.0</span> nm</label>
+            <input type="range" id="dotSize" min="1" max="10" step="0.1" value="5">
+        </div>
+
+        <div class="output">
+            Energy Level: <span id="energyValue">0.00</span> eV<br>
+            Wavelength: <span id="wavelengthValue">0.00</span> nm
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("dotCanvas");
+        const ctx = canvas.getContext("2d");
+        const dotSizeSlider = document.getElementById("dotSize");
+        const dotSizeValue = document.getElementById("dotSizeValue");
+        const energyValue = document.getElementById("energyValue");
+        const wavelengthValue = document.getElementById("wavelengthValue");
+
+        // Physical constants
+        const h_Js = 6.62607015e-34;   // Planck's constant in J·s
+        const eV_to_J = 1.602176634e-19; // 1 eV = this many joules
+        const c = 2.99792458e8;        // speed of light (m/s)
+        const m_e = 9.10938356e-31;    // electron mass (kg)
+        const m_eff = 0.13 * m_e;      // effective mass (CdSe example)
+
+        // Update simulation
+        function simulate() {
+            const L_nm = parseFloat(dotSizeSlider.value);
+            const L_m = L_nm * 1e-9;
+
+            // Quantum confinement energy (n=1, 3D spherical approximation)
+            // E ∝ 1/L² so smaller dot -> higher energy
+            const energy_J = (Math.pow(h_Js, 2) * Math.PI ** 2) / (2 * m_eff * Math.pow(L_m, 2));
+            const energy_eV = energy_J / eV_to_J;
+
+            // Corresponding photon wavelength
+            const wavelength_m = (4.135667697e-15 * c) / energy_eV;
+            const wavelength_nm = wavelength_m * 1e9;
+
+            // Update numbers
+            dotSizeValue.textContent = L_nm.toFixed(1);
+            energyValue.textContent = energy_eV.toFixed(2);
+            wavelengthValue.textContent = wavelength_nm.toFixed(1);
+
+            drawDot(L_nm);
+        }
+
+        // Draw circular quantum dot with color changing by energy
+        function drawDot(size_nm) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const maxRadius = 120; // radius for 10 nm dot
+            const radius = (size_nm / 10) * maxRadius;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            // Color map: smaller size = bluer, larger = redder
+            const hue = 240 - (size_nm - 1) * 20; // 240=blue → 40=red
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.fillStyle = `hsl(${hue}, 80%, 50%)`;
+            ctx.fill();
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        dotSizeSlider.addEventListener("input", simulate);
+        simulate();
+    </script>
+
+</body>
+
+</html>

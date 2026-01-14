@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Density-Matrix Rabi Simulator — Research Edition</title>
+    <style>
+        :root {
+            --bg: #071226;
+            --card: #0b1622;
+            --accent: #22c1c3;
+            --muted: #9fb2c6
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: Inter, system-ui, Arial;
+            background: linear-gradient(180deg, #03101a, #071827);
+            color: #e6eef6
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 14px auto;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 12px
+        }
+
+        .card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.04)
+        }
+
+        h1 {
+            margin: 4px 0 8px;
+            font-size: 18px
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        label {
+            font-size: 13px;
+            color: var(--muted);
+            min-width: 110px
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        input[type=range] {
+            flex: 1
+        }
+
+        input[type=number] {
+            width: 110px;
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            background: transparent;
+            color: #cfeffd
+        }
+
+        select,
+        textarea {
+            background: transparent;
+            color: #cfeffd;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 6px
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            padding: 8px 10px;
+            border-radius: 8px;
+            color: #021017;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .small {
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            border-radius: 8px
+        }
+
+        .two {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px
+        }
+
+        footer {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px
+        }
+
+        @media(max-width:980px) {
+            .page {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <div class="card">
+            <h1>Density-Matrix Rabi Simulator — Research Edition</h1>
+
+            <div class="small">Solves: <code>dρ/dt = -i [H(t), ρ] + L(ρ)</code> with Lindblad relaxation (Γ₁) and
+                pure dephasing (Γφ). H in rotating frame: (Δ/2)σ_z + (Ω(t)/2) σ_x . Units: rad/s and seconds.</div>
+
+            <div style="height:10px"></div>
+
+            <div class="two">
+                <div>
+                    <canvas id="popCanvas" width="800" height="240"></canvas>
+                </div>
+                <div>
+                    <canvas id="cohCanvas" width="800" height="240"></canvas>
+                </div>
+            </div>
+
+            <div style="height:10px"></div>
+
+            <div class="row">
+                <button id="runBtn">Run</button>
+                <button id="pauseBtn">Pause</button>
+                <button id="stepBtn">Single Step</button>
+                <button id="resetBtn">Reset</button>
+                <button id="csvBtn">Export CSV</button>
+                <button id="pngBtn">Save PNG</button>
+            </div>
+
+            <div style="height:8px"></div>
+
+            <div class="small">Quick presets:
+                <button class="preset"
+                    data-ps='{"name":"π-pulse (res)", "omega":15,"det":0,"pulse":"square","pd":0.104,"tmax":0.3}'>π-pulse</button>
+                <button class="preset"
+                    data-ps='{"name":"Rabi flopping", "omega":6,"det":0,"pulse":"cw","pd":2,"tmax":3}'>Rabi
+                    flopping</button>
+                <button class="preset"
+                    data-ps='{"name":"Detuned beat", "omega":6,"det":4,"pulse":"cw","pd":3,"tmax":6}'>Detuned
+                    beat</button>
+            </div>
+
+            <footer>Designed for reproducibility. If you need Lindblad with multiple channels or custom collapse
+                operators, you can easily extend the <code>linbladStep</code> routine below.</footer>
+        </div>
+
+        <div class="card">
+            <h1>Parameters & Pulse</h1>
+            <div class="controls">
+                <div class="row"><label>Rabi amplitude Ω<sub>R</sub> (rad/s)</label>
+                    <input id="Omega" type="number" step="0.1" value="6">
+                </div>
+
+                <div class="row"><label>Detuning Δ (rad/s)</label>
+                    <input id="Delta" type="number" step="0.1" value="0">
+                </div>
+
+                <div class="row"><label>Γ₁ (s⁻¹) — relaxation</label>
+                    <input id="Gamma1" type="number" step="0.001" value="0.0">
+                </div>
+
+                <div class="row"><label>Γφ (s⁻¹) — pure dephasing</label>
+                    <input id="GammaPhi" type="number" step="0.001" value="0.0">
+                </div>
+
+                <div class="row"><label>Pulse type</label>
+                    <select id="pulseType">
+                        <option value="cw">Continuous (CW)</option>
+                        <option value="gauss">Gaussian</option>
+                        <option value="square">Square</option>
+                        <option value="sinc">Sinc</option>
+                        <option value="custom">Custom JS expression Ω(t)</option>
+                    </select>
+                </div>
+
+                <div class="row"><label>Pulse duration (s)</label>
+                    <input id="pulseDur" type="number" step="0.001" value="2.0">
+                </div>
+
+                <div class="row"><label>Custom Ω(t)</label>
+                    <textarea id="customOmega"
+                        rows="4">return 6.0 * Math.exp(-((t-1.0)**2)/(2*(0.2**2)) ); // example: gaussian centered at 1s</textarea>
+                </div>
+
+                <div class="row"><label>Initial state</label>
+                    <select id="initState">
+                        <option value="g">Ground (ρ=|0⟩⟨0|)</option>
+                        <option value="e">Excited (ρ=|1⟩⟨1|)</option>
+                        <option value="plus">Coherent (|+⟩)</option>
+                    </select>
+                </div>
+
+                <div class="row"><label>Time step (s)</label>
+                    <input id="dt" type="number" step="1e-5" value="5e-4">
+                </div>
+
+                <div class="row"><label>t_max (s)</label>
+                    <input id="tmax" type="number" step="0.01" value="6.0">
+                </div>
+
+                <div class="row"><label>Plot decimation</label>
+                    <input id="decimate" type="number" step="1" value="6">
+                </div>
+
+                <div class="row"><label>Notes / experiment ID</label>
+                    <input id="notes" type="text" placeholder="e.g. run_2025_10_28_exp1">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ===========================
+        Research Density-Matrix Rabi Simulator
+        Author: ChatGPT (code-ready)
+        Features:
+            - complex 2x2 density matrix evolution with Lindblad
+            - RK4 integrator
+            - custom pulse function via JS expression (safe-ish; review before use)
+            - CSV export and PNG snapshot of plotted canvases
+        Units: seconds and rad/s
+        =========================== */
+
+        /* ---------- Complex arithmetic utilities ---------- */
+        function C(re, im = 0) { return { r: re, i: im }; }
+        function cadd(a, b) { return { r: a.r + b.r, i: a.i + b.i }; }
+        function csub(a, b) { return { r: a.r - b.r, i: a.i - b.i }; }
+        function cmul(a, b) { return { r: a.r * b.r - a.i * b.i, i: a.r * b.i + a.i * b.r }; }
+        function cscale(a, s) { return { r: a.r * s, i: a.i * s }; }
+        function conj(a) { return { r: a.r, i: -a.i }; }
+        function cneg(a) { return { r: -a.r, i: -a.i }; }
+
+        /* ---------- Density matrix helpers (2x2 complex) ---------- */
+        function rhoCopy(r) {
+            return [
+                [C(r[0][0].r, r[0][0].i), C(r[0][1].r, r[0][1].i)],
+                [C(r[1][0].r, r[1][0].i), C(r[1][1].r, r[1][1].i)]
+            ];
+        }
+        function rhoZero() { return [[C(1, 0), C(0, 0)], [C(0, 0), C(0, 0)]]; }
+
+        /* ---------- Pauli matrices / operators (complex) ---------- */
+        const sigmaX = [[C(0, 0), C(1, 0)], [C(1, 0), C(0, 0)]];
+        const sigmaY = [[C(0, 0), C(0, -1)], [C(0, 1), C(0, 0)]];
+        const sigmaZ = [[C(1, 0), C(0, 0)], [C(0, 0), C(-1, 0)]];
+
+        /* matrix ops for 2x2 complex matrices */
+        function matAdd(A, B) {
+            return [
+                [cadd(A[0][0], B[0][0]), cadd(A[0][1], B[0][1])],
+                [cadd(A[1][0], B[1][0]), cadd(A[1][1], B[1][1])]
+            ];
+        }
+        function matSub(A, B) {
+            return [
+                [csub(A[0][0], B[0][0]), csub(A[0][1], B[0][1])],
+                [csub(A[1][0], B[1][0]), csub(A[1][1], B[1][1])]
+            ];
+        }
+        function matScale(A, s) {
+            return [
+                [cscale(A[0][0], s), cscale(A[0][1], s)],
+                [cscale(A[1][0], s), cscale(A[1][1], s)]
+            ];
+        }
+        function matMult(A, B) {
+            return [
+                [cadd(cmul(A[0][0], B[0][0]), cmul(A[0][1], B[1][0])),
+                cadd(cmul(A[0][0], B[0][1]), cmul(A[0][1], B[1][1]))],
+                [cadd(cmul(A[1][0], B[0][0]), cmul(A[1][1], B[1][0])),
+                cadd(cmul(A[1][0], B[0][1]), cmul(A[1][1], B[1][1]))]
+            ];
+        }
+        function matConjTrans(A) {
+            return [
+                [conj(A[0][0]), conj(A[1][0])],
+                [conj(A[0][1]), conj(A[1][1])]
+            ];
+        }
+        function commutator(A, B) {
+            return matSub(matMult(A, B), matMult(B, A));
+        }
+        function anticommutator(A, B) {
+            return matAdd(matMult(A, B), matMult(B, A));
+        }
+
+        /* ---------- Lindblad collapse operators ---------- */
+        const sigmaMinus = [[C(0, 0), C(0, 0)], [C(1, 0), C(0, 0)]];
+        const sigmaPlus = matConjTrans(sigmaMinus);
+
+        /* ---------- Simulation parameters references ---------- */
+        const OmegaInput = document.getElementById('Omega');
+        const DeltaInput = document.getElementById('Delta');
+        const Gamma1Input = document.getElementById('Gamma1');
+        const GammaPhiInput = document.getElementById('GammaPhi');
+        const pulseTypeInput = document.getElementById('pulseType');
+        const pulseDurInput = document.getElementById('pulseDur');
+        const customOmegaInput = document.getElementById('customOmega');
+        const initStateInput = document.getElementById('initState');
+        const dtInput = document.getElementById('dt');
+        const tmaxInput = document.getElementById('tmax');
+        const decimateInput = document.getElementById('decimate');
+        const notesInput = document.getElementById('notes');
+
+        const runBtn = document.getElementById('runBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const csvBtn = document.getElementById('csvBtn');
+        const pngBtn = document.getElementById('pngBtn');
+
+        const popCanvas = document.getElementById('popCanvas');
+        const cohCanvas = document.getElementById('cohCanvas');
+        const pctx = popCanvas.getContext('2d');
+        const cctx = cohCanvas.getContext('2d');
+
+        /* ---------- Simulation state ---------- */
+        let rho = rhoZero();
+        let t = 0;
+        let running = false;
+        let data = [];
+
+        /* ---------- Build Hamiltonian ---------- */
+        function H_of_t(tAbs) {
+            const Delta = Number(DeltaInput.value);
+            const OmegaDrive = Omega_of_t(tAbs);
+
+            return [
+                [cscale(sigmaZ[0][0], 0.5 * Delta), cscale(sigmaX[0][1], 0.5 * OmegaDrive)],
+                [cscale(sigmaX[1][0], 0.5 * OmegaDrive), cscale(sigmaZ[1][1], 0.5 * Delta)]
+            ];
+        }
+
+        /* ---------- Drive / pulse definitions ---------- */
+        function Omega_of_t(tAbs) {
+            const globalOmega = Number(OmegaInput.value);
+            const pulseType = pulseTypeInput.value;
+            const pdur = Number(pulseDurInput.value);
+
+            if (pulseType === 'cw') return globalOmega;
+            if (pulseType === 'square') return (tAbs >= 0 && tAbs <= pdur) ? globalOmega : 0.0;
+            if (pulseType === 'gauss') {
+                const sigma = pdur / 4;
+                const mid = pdur / 2;
+                return globalOmega * Math.exp(-0.5 * ((tAbs - mid) / sigma) ** 2);
+            }
+            if (pulseType === 'sinc') {
+                const mid = pdur / 2;
+                const x = (tAbs - mid) / (pdur / 8);
+                if (Math.abs(x) < 1e-12) return globalOmega;
+                return globalOmega * Math.sin(Math.PI * x) / (Math.PI * x);
+            }
+            if (pulseType === 'custom') {
+                try {
+                    const fn = new Function('t', 'Omega0', 'pdur', customOmegaInput.value);
+                    const val = Number(fn(tAbs, globalOmega, pdur));
+                    if (Number.isFinite(val)) return val;
+                } catch (e) {
+                    console.warn('Custom Omega(t) error:', e);
+                    return 0.0;
+                }
+            }
+            return 0.0;
+        }
+
+        /* ---------- Lindblad superoperator ---------- */
+        function lindbladTerm(rhoMat) {
+            const Gamma1 = Number(Gamma1Input.value);
+            const GammaPhi = Number(GammaPhiInput.value);
+
+            let term = [[C(0, 0), C(0, 0)], [C(0, 0), C(0, 0)]];
+
+            if (Gamma1 > 0) {
+                const A = sigmaMinus;
+                const AdagA = matMult(sigmaPlus, sigmaMinus);
+                const ArhoAdag = matMult(matMult(A, rhoMat), sigmaPlus);
+                const anti = matAdd(matMult(AdagA, rhoMat), matMult(rhoMat, AdagA));
+                const deco = matSub(ArhoAdag, matScale(anti, 0.5));
+                term = matAdd(term, matScale(deco, Gamma1));
+            }
+
+            if (GammaPhi > 0) {
+                const Szrho = matMult(sigmaZ, matMult(rhoMat, sigmaZ));
+                const d = matSub(Szrho, rhoMat);
+                term = matAdd(term, matScale(d, GammaPhi));
+            }
+            return term;
+        }
+
+        /* ---------- Master equation derivative: dρ/dt ---------- */
+        function drhodt(rhoMat, tAbs) {
+            const H = H_of_t(tAbs);
+            const comm = commutator(H, rhoMat);
+
+            const minusIComm = [
+                [{ r: comm[0][0].i, i: -comm[0][0].r }, { r: comm[0][1].i, i: -comm[0][1].r }],
+                [{ r: comm[1][0].i, i: -comm[1][0].r }, { r: comm[1][1].i, i: -comm[1][1].r }]
+            ];
+
+            const L = lindbladTerm(rhoMat);
+            return matAdd(minusIComm, L);
+        }
+
+        /* ---------- RK4 integrator ---------- */
+        function rk4Step(rhoMat, tAbs, h) {
+            const k1 = drhodt(rhoMat, tAbs);
+            const r2 = matAdd(rhoMat, matScale(k1, h * 0.5));
+            const k2 = drhodt(r2, tAbs + h * 0.5);
+            const r3 = matAdd(rhoMat, matScale(k2, h * 0.5));
+            const k3 = drhodt(r3, tAbs + h * 0.5);
+            const r4 = matAdd(rhoMat, matScale(k3, h));
+            const k4 = drhodt(r4, tAbs + h);
+
+            const sum = matAdd(k1, matScale(matAdd(k2, k3), 2));
+            const total = matAdd(sum, k4);
+            const step = matScale(total, h / 6.0);
+            return matAdd(rhoMat, step);
+        }
+
+        /* ---------- Initialization ---------- */
+        function setInitialRho() {
+            const choice = initStateInput.value;
+            if (choice === 'g') {
+                rho = [[C(1, 0), C(0, 0)], [C(0, 0), C(0, 0)]];
+            } else if (choice === 'e') {
+                rho = [[C(0, 0), C(0, 0)], [C(0, 0), C(1, 0)]];
+            } else if (choice === 'plus') {
+                const v = 0.5; // |+><+| has off-diagonal 0.5
+                rho = [[C(0.5, 0), C(0.5, 0)], [C(0.5, 0), C(0.5, 0)]];
+            } else {
+                rho = rhoZero();
+            }
+        }
+
+        /* ---------- Sampling & data storage ---------- */
+        function sampleAndStore(tAbs) {
+            const rho00 = rho[0][0].r;
+            const rho11 = rho[1][1].r;
+            const rho01 = rho[0][1];
+            const re01 = rho01.r, im01 = rho01.i;
+            const abs01 = Math.sqrt(re01 * re01 + im01 * im01);
+            data.push({ t: tAbs, rho00: rho00, rho11: rho11, re01: re01, im01: im01, abs01: abs01 });
+        }
+
+        /* ---------- Plot utilities ---------- */
+        function clearCanvas(ctx, canvas) {
+            ctx.fillStyle = '#041022';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawGrid(ctx, canvas) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.lineWidth = 1;
+            const w = canvas.width, h = canvas.height;
+            for (let i = 0; i <= 4; i++) {
+                const y = 12 + i * (h - 28) / 4;
+                ctx.beginPath();
+                ctx.moveTo(40, y);
+                ctx.lineTo(w - 8, y);
+                ctx.stroke();
+            }
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+            ctx.beginPath();
+            ctx.moveTo(40, 8);
+            ctx.lineTo(40, h - 8);
+            ctx.lineTo(w - 8, h - 8);
+            ctx.stroke();
+        }
+
+        function drawPopulationPlot() {
+            const ctx = pctx, canvas = popCanvas;
+            clearCanvas(ctx, canvas);
+            drawGrid(ctx, canvas);
+            ctx.fillStyle = '#9fb2c6';
+            ctx.font = '13px Inter';
+            ctx.fillText('Population', 8, 16);
+
+            if (data.length < 2) return;
+
+            const w = canvas.width, h = canvas.height;
+            const tmaxData = data[data.length - 1].t;
+            const tmin = Math.max(0, tmaxData - Number(tmaxInput.value));
+            const span = Math.max(1e-12, tmaxData - tmin);
+
+            ctx.beginPath();
+            for (let i = 0; i < data.length; i++) {
+                const d = data[i];
+                if (d.t < tmin) continue;
+                const x = 40 + ((d.t - tmin) / span) * (w - 56);
+                const y1 = 12 + (1 - d.rho11) * (h - 28);
+                if (i === 0 || data[i - 1].t < tmin) ctx.moveTo(x, y1);
+                else ctx.lineTo(x, y1);
+            }
+            ctx.strokeStyle = 'rgba(34,193,195,0.95)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            for (let i = 0; i < data.length; i++) {
+                const d = data[i];
+                if (d.t < tmin) continue;
+                const x = 40 + ((d.t - tmin) / span) * (w - 56);
+                const y0 = 12 + (1 - d.rho00) * (h - 28);
+                if (i === 0 || data[i - 1].t < tmin) ctx.moveTo(x, y0);
+                else ctx.lineTo(x, y0);
+            }
+            ctx.strokeStyle = 'rgba(255,193,7,0.95)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#cfeffd';
+            ctx.fillText('ρ11 (excited)', 12, canvas.height - 6);
+            ctx.fillStyle = '#ffd57a';
+            ctx.fillText('ρ00 (ground)', 140, canvas.height - 6);
+        }
+
+        function drawCoherencePlot() {
+            const ctx = cctx, canvas = cohCanvas;
+            clearCanvas(ctx, canvas);
+            drawGrid(ctx, canvas);
+            ctx.fillStyle = '#9fb2c6';
+            ctx.font = '13px Inter';
+            ctx.fillText('Coherence ρ01 (Re/Im/| |)', 8, 16);
+
+            if (data.length < 2) return;
+
+            const w = canvas.width, h = canvas.height;
+            const tmaxData = data[data.length - 1].t;
+            const tmin = Math.max(0, tmaxData - Number(tmaxInput.value));
+            const span = Math.max(1e-12, tmaxData - tmin);
+
+            ctx.beginPath();
+            for (let i = 0; i < data.length; i++) {
+                const d = data[i];
+                if (d.t < tmin) continue;
+                const x = 40 + ((d.t - tmin) / span) * (w - 56);
+                const yRe = 12 + (1 - (d.re01 + 0.5)) * (h - 28);
+                if (i === 0 || data[i - 1].t < tmin) ctx.moveTo(x, yRe);
+                else ctx.lineTo(x, yRe);
+            }
+            ctx.strokeStyle = 'rgba(52,199,123,0.95)';
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+
+            ctx.beginPath();
+            for (let i = 0; i < data.length; i++) {
+                const d = data[i];
+                if (d.t < tmin) continue;
+                const x = 40 + ((d.t - tmin) / span) * (w - 56);
+                const yIm = 12 + (1 - (d.im01 + 0.5)) * (h - 28);
+                if (i === 0 || data[i - 1].t < tmin) ctx.moveTo(x, yIm);
+                else ctx.lineTo(x, yIm);
+            }
+            ctx.strokeStyle = 'rgba(255,159,67,0.95)';
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+
+            ctx.beginPath();
+            for (let i = 0; i < data.length; i++) {
+                const d = data[i];
+                if (d.t < tmin) continue;
+                const x = 40 + ((d.t - tmin) / span) * (w - 56);
+                const yAbs = 12 + (1 - d.abs01) * (h - 28);
+                if (i === 0 || data[i - 1].t < tmin) ctx.moveTo(x, yAbs);
+                else ctx.lineTo(x, yAbs);
+            }
+            ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#34c77b';
+            ctx.fillText('Re ρ01', 12, canvas.height - 6);
+            ctx.fillStyle = '#ff9f43';
+            ctx.fillText('Im ρ01', 86, canvas.height - 6);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('|ρ01|', 154, canvas.height - 6);
+        }
+
+        /* ---------- Button actions ---------- */
+        runBtn.addEventListener('click', () => {
+            if (running) return;
+
+            setInitialRho();
+            running = true;
+            data = [];
+            t = 0;
+
+            const dt = Number(dtInput.value);
+            const tmax = Number(tmaxInput.value);
+            const totalSteps = Math.ceil(tmax / dt);
+            const dec = Math.max(1, Number(decimateInput.value));
+            let step = 0;
+
+            sampleAndStore(t);
+
+            function chunk() {
+                if (!running) return;
+
+                const chunkSize = 2000;
+                for (let k = 0; k < chunkSize && step < totalSteps && running; k++) {
+                    rho = rk4Step(rho, t, dt);
+                    t += dt;
+                    step++;
+                    if (step % dec === 0) sampleAndStore(t);
+                }
+
+                drawPopulationPlot();
+                drawCoherencePlot();
+
+                if (step < totalSteps && running) {
+                    setTimeout(chunk, 0);
+                } else {
+                    running = false;
+                }
+            }
+            chunk();
+        });
+
+        pauseBtn.addEventListener('click', () => {
+            running = false;
+        });
+
+        stepBtn.addEventListener('click', () => {
+            running = false;
+            const dt = Number(dtInput.value);
+            rho = rk4Step(rho, t, dt);
+            t += dt;
+            sampleAndStore(t);
+            drawPopulationPlot();
+            drawCoherencePlot();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            running = false;
+            data = [];
+            setInitialRho();
+            t = 0;
+            drawPopulationPlot();
+            drawCoherencePlot();
+        });
+
+        csvBtn.addEventListener('click', () => {
+            if (data.length === 0) {
+                alert('No data to export. Run the simulation first.');
+                return;
+            }
+            let csv = 't,rho00,rho11,Re_rho01,Im_rho01,abs_rho01\n';
+            for (const d of data) {
+                csv += `${d.t},${d.rho00},${d.rho11},${d.re01},${d.im01},${d.abs01}\n`;
+            }
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            const notes = (notesInput.value || 'run').replace(/\s+/g, '_');
+            a.download = `rabi_dm_${notes}.csv`;
+            a.click();
+        });
+
+        pngBtn.addEventListener('click', () => {
+            const w = Math.max(popCanvas.width, cohCanvas.width);
+            const h = popCanvas.height + cohCanvas.height + 10;
+            const out = document.createElement('canvas');
+            out.width = w;
+            out.height = h;
+            const octx = out.getContext('2d');
+            octx.fillStyle = '#041022';
+            octx.fillRect(0, 0, w, h);
+            octx.drawImage(popCanvas, 0, 0);
+            octx.drawImage(cohCanvas, 0, popCanvas.height + 10);
+            const a = document.createElement('a');
+            a.href = out.toDataURL('image/png');
+            a.download = `rabi_dm_snapshot.png`;
+            a.click();
+        });
+
+        /* Preset buttons */
+        document.querySelectorAll('.preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const obj = JSON.parse(btn.dataset.ps);
+                OmegaInput.value = obj.omega || OmegaInput.value;
+                DeltaInput.value = obj.det || DeltaInput.value;
+                pulseTypeInput.value = obj.pulse || pulseTypeInput.value;
+                pulseDurInput.value = obj.pd || pulseDurInput.value;
+                tmaxInput.value = obj.tmax || tmaxInput.value;
+                resetBtn.click();
+            });
+        });
+
+        /* UI field refresh */
+        function refreshUIFields() {
+            drawPopulationPlot();
+            drawCoherencePlot();
+        }
+
+        [OmegaInput, DeltaInput, Gamma1Input, GammaPhiInput, pulseTypeInput, pulseDurInput,
+            dtInput, tmaxInput, decimateInput, initStateInput].forEach(el => {
+                el.addEventListener('input', refreshUIFields);
+            });
+
+        /* Initial draw */
+        setInitialRho();
+        drawPopulationPlot();
+        drawCoherencePlot();
+    </script>
+</body>
+
+</html>

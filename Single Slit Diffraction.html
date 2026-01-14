@@ -1,0 +1,230 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Single-Slit Diffraction Simulation</title>
+    <style>
+        :root {
+            --bg: #05060a;
+            --panel: #101b2e;
+            --red: #ff4c4c;
+            --text: #cfe8ff;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            margin: 16px;
+            color: #fff;
+        }
+
+        #controls {
+            background: var(--panel);
+            padding: 10px 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px #000;
+            width: 340px;
+        }
+
+        label {
+            display: block;
+            margin: 6px 0;
+            font-size: 15px;
+        }
+
+        input[type=range] {
+            width: 100%;
+        }
+
+        #uncertainty {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #ffd700;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        canvas {
+            margin-top: 20px;
+            background: radial-gradient(circle at 30% 50%, #060a18, #020309 80%);
+            border-radius: 10px;
+            width: 720px;
+            height: 400px;
+            display: block;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3) inset;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Uncertainty Principle – Single Slit Diffraction</h2>
+    <div id="controls">
+        <label>Slit Width: <span id="slitVal">60 μm</span>
+            <input id="slit" type="range" min="10" max="250" value="60">
+        </label>
+        <label>Wavelength: <span id="wavVal">650 nm</span>
+            <input id="wavelength" type="range" min="400" max="700" value="650">
+        </label>
+        <label>Distance to Screen: <span id="distVal">1.00 m</span>
+            <input id="dist" type="range" min="0.2" max="2.0" step="0.1" value="1.0">
+        </label>
+        <button id="autoBtn" style="margin-top:8px;">Start Auto Demo</button>
+    </div>
+
+    <div id="uncertainty">Adjust the slit to see uncertainty in action</div>
+
+    <canvas id="view"></canvas>
+
+    <script>
+        (() => {
+            const slit = document.getElementById("slit");
+            const wavelength = document.getElementById("wavelength");
+            const dist = document.getElementById("dist");
+            const slitVal = document.getElementById("slitVal");
+            const wavVal = document.getElementById("wavVal");
+            const distVal = document.getElementById("distVal");
+            const uncertaintyText = document.getElementById("uncertainty");
+            const view = document.getElementById("view");
+            const ctx = view.getContext("2d");
+            let auto = false, autoStart = 0;
+
+            const updateLabels = () => {
+                slitVal.textContent = `${slit.value} μm`;
+                wavVal.textContent = `${wavelength.value} nm`;
+                distVal.textContent = `${parseFloat(dist.value).toFixed(2)} m`;
+            };
+            [slit, wavelength, dist].forEach(el => el.addEventListener("input", updateLabels));
+            updateLabels();
+
+            document.getElementById("autoBtn").onclick = e => {
+                auto = !auto;
+                autoStart = performance.now();
+                e.target.textContent = auto ? "Stop Auto Demo" : "Start Auto Demo";
+            };
+
+            const resize = () => {
+                const dpr = window.devicePixelRatio || 1;
+                view.width = view.clientWidth * dpr;
+                view.height = view.clientHeight * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            };
+            window.addEventListener("resize", resize);
+            resize();
+
+            const draw = (time) => {
+                const W = view.clientWidth, H = view.clientHeight;
+                ctx.clearRect(0, 0, W, H);
+                const midY = H / 2, barrierX = W * 0.45, screenX = W * 0.9;
+
+                // --- Animated slit width (full 10–250 μm range) ---
+                let slitW = parseFloat(slit.value);
+                if (auto) {
+                    const t = ((time - autoStart) % 8000) / 8000;
+                    slitW = 10 + (250 - 10) * (0.5 - 0.5 * Math.cos(2 * Math.PI * t));
+                    slit.value = Math.round(slitW);
+                    slitVal.textContent = `${Math.round(slitW)} μm`;
+                }
+
+                // --- Draw barrier ---
+                ctx.fillStyle = "#dfeffb";
+                ctx.fillRect(barrierX - 3, H * 0.15, 6, H * 0.7);
+
+                // --- Draw moving slit gap ---
+                const slitPix = (slitW / 250) * (H * 0.6);
+                const moveOffset = auto ? Math.sin(time / 1000) * 5 : 0;
+                ctx.save();
+                ctx.globalCompositeOperation = "destination-out";
+                ctx.fillRect(barrierX - 3, midY - slitPix / 2 + moveOffset, 6, slitPix);
+                ctx.restore();
+
+                // --- Laser beam ---
+                const beamGrad = ctx.createLinearGradient(0, midY, barrierX, midY);
+                beamGrad.addColorStop(0, "rgba(255,60,60,1)");
+                beamGrad.addColorStop(1, "rgba(255,60,60,0)");
+                ctx.fillStyle = beamGrad;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "rgba(255,60,60,0.7)";
+                ctx.fillRect(0, midY - 4, barrierX, 8);
+                ctx.shadowBlur = 0;
+
+                // --- Diffraction fan ---
+                const spread = (200 / slitW) * 0.45;
+                const rays = 60;
+                for (let i = -rays / 2; i <= rays / 2; i++) {
+                    const angle = i * spread / rays;
+                    const endY = midY + Math.tan(angle) * (screenX - barrierX);
+                    ctx.beginPath();
+                    ctx.moveTo(barrierX, midY);
+                    ctx.quadraticCurveTo(barrierX + 30, midY, screenX, endY);
+                    const alpha = 0.7 - Math.abs(i) / (rays / 2);
+                    ctx.strokeStyle = `rgba(255,70,70,${alpha * 0.2})`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                // --- Screen intensity ---
+                const lam = wavelength.value * 1e-9;
+                const N = 250;
+                const a = slitW * 1e-6, L = parseFloat(dist.value);
+                let maxI = 0;
+                const data = [];
+                for (let i = 0; i < N; i++) {
+                    const y = (i / N - 0.5) * 0.05;
+                    const theta = Math.atan2(y, L);
+                    const beta = Math.PI * a * Math.sin(theta) / lam;
+                    const I = Math.abs(beta) < 1e-6 ? 1 : (Math.sin(beta) / beta) ** 2;
+                    data.push(I); if (I > maxI) maxI = I;
+                }
+                for (let i = 0; i < N; i++) {
+                    const I = data[i] / maxI;
+                    const y = midY - (i / N - 0.5) * (H * 0.6);
+                    const col = `rgba(${255 * I},${60 + I * 100},${60 + I * 100},${I})`;
+                    ctx.fillStyle = col;
+                    ctx.fillRect(screenX + 8, y, 10, 2);
+                }
+
+                // --- Uncertainty bars ---
+                const barWidth = 15;
+                const barHeight = 120;
+                const barX = 50;
+                const barY = H * 0.85;
+                const posUncertainty = ((slitW - 10) / (250 - 10)) * barHeight;
+                const momUncertainty = barHeight - posUncertainty;
+                ctx.fillStyle = "rgba(60,200,255,0.8)";
+                ctx.fillRect(barX, barY - posUncertainty, barWidth, posUncertainty);
+                ctx.fillStyle = "#cfe8ff";
+                ctx.fillText("Δx", barX + 2, barY + 15);
+                ctx.fillStyle = "rgba(255,120,60,0.8)";
+                ctx.fillRect(barX + 40, barY - momUncertainty, barWidth, momUncertainty);
+                ctx.fillStyle = "#cfe8ff";
+                ctx.fillText("Δp", barX + 42, barY + 15);
+                ctx.strokeStyle = "#fff";
+                ctx.strokeRect(barX, barY - barHeight, barWidth, barHeight);
+                ctx.strokeRect(barX + 40, barY - barHeight, barWidth, barHeight);
+
+                // --- Update uncertainty text ---
+                if (slitW < 80) {
+                    uncertaintyText.textContent = "Slit narrow → Position certain, Momentum uncertain";
+                } else if (slitW > 180) {
+                    uncertaintyText.textContent = "Slit wide → Position uncertain, Momentum certain";
+                } else {
+                    uncertaintyText.textContent = "Intermediate slit → Position and Momentum moderately uncertain";
+                }
+
+                requestAnimationFrame(draw);
+            };
+            requestAnimationFrame(draw);
+        })();
+    </script>
+</body>
+
+</html>

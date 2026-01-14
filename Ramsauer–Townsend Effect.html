@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ramsauer–Townsend Effect Simulation</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Roboto, Arial;
+            margin: 0;
+            background: #f5f7fb;
+            color: #222;
+        }
+
+        header {
+            background: linear-gradient(90deg, #007bff, #00c0ff);
+            color: white;
+            padding: 16px 24px;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .desc {
+            background: #e8f3ff;
+            padding: 12px 24px;
+            font-size: 14.5px;
+            border-bottom: 1px solid #cce3ff;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 200px;
+        }
+
+        label {
+            font-size: 13px;
+            color: #333;
+        }
+
+        input[type=range] {
+            width: 100%;
+        }
+
+        canvas {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .col {
+            flex: 1;
+            min-width: 320px;
+        }
+
+        .value {
+            font-weight: 600;
+            color: #111;
+        }
+
+        button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #005fcc;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+            padding: 10px 0 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>🧪 Ramsauer–Townsend Effect Simulation</header>
+
+    <div class="desc">
+          This simulation shows how low-energy electrons pass almost freely through noble gas atoms — a phenomenon known
+        as the <b>Ramsauer–Townsend effect</b>.
+          It occurs due to <b>destructive interference</b> of the electron’s de Broglie waves inside the atomic
+        potential well,
+          causing a <b>dip in scattering probability</b> (or a <b>maximum in transmission</b>) at certain energies.
+    </div>
+
+    <div class="container">
+          <div class="controls">
+                <div class="control">
+                      <label>Well depth V₀ (eV): <span id="V0val" class="value">5.00</span></label>
+                      <input id="V0" type="range" min="0" max="50" step="0.1" value="5">
+                    </div>
+                <div class="control">
+                      <label>Well width a (nm): <span id="Aval" class="value">0.8</span></label>
+                      <input id="a" type="range" min="0.1" max="5" step="0.05" value="0.8">
+                    </div>
+                <div class="control">
+                      <label>Electron energy E (eV): <span id="Eval" class="value">1.00</span></label>
+                      <input id="E" type="range" min="0.01" max="20" step="0.01" value="1">
+                    </div>
+                <div class="control">
+                      <label>Animation</label>
+                      <button id="runPause">Pause</button>
+                    </div>
+              </div>
+
+          <div class="row">
+                <div class="col">
+                      <canvas id="waveCanvas" width="800" height="260"></canvas>
+                    </div>
+                <div class="col">
+                      <canvas id="plotCanvas" width="500" height="260"></canvas>
+                    </div>
+              </div>
+    </div>
+
+    <footer>
+          Developed for physics education — visualize <b>quantum tunneling and interference</b> in electron scattering.
+         
+          Adjust parameters to locate the <b>Ramsauer–Townsend minima</b>.
+    </footer>
+
+    <script>
+        /* --- (The JavaScript code below is same simulation logic) --- */
+        /* Complex number utilities */
+        function C(re, im = 0) { return { re, im }; }
+        function cAdd(a, b) { return C(a.re + b.re, a.im + b.im); }
+        function cSub(a, b) { return C(a.re - b.re, a.im - b.im); }
+        function cMul(a, b) { return C(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re); }
+        function cDiv(a, b) { const d = b.re * b.re + b.im * b.im; return C((a.re * b.re + a.im * b.im) / d, (a.im * b.re - a.re * b.im) / d); }
+        function cAbs2(a) { return a.re * a.re + a.im * a.im; }
+        function cExpI(x) { return C(Math.cos(x), Math.sin(x)); }
+        function cNeg(a) { return C(-a.re, -a.im); }
+
+        /* Gauss elimination for 4x4 complex system */
+        function solve4x4Complex(A, b) {
+            const n = 4, M = A.map((row, i) => [...row, b[i]]);
+            for (let k = 0; k < n; k++) {
+                let piv = k; let max = cAbs2(M[k][k]);
+                for (let i = k + 1; i < n; i++) { let m = cAbs2(M[i][k]); if (m > max) { max = m; piv = i; } }
+                if (piv != k) [M[k], M[piv]] = [M[piv], M[k]];
+                let pv = M[k][k];
+                for (let j = k; j <= n; j++)M[k][j] = cDiv(M[k][j], pv);
+                for (let i = 0; i < n; i++) {
+                    if (i == k) continue;
+                    const f = M[i][k];
+                    for (let j = k; j <= n; j++)M[i][j] = cSub(M[i][j], cMul(f, M[k][j]));
+                }
+            }
+            return [M[0][4], M[1][4], M[2][4], M[3][4]];
+        }
+
+        /* Physics core */
+        const H2_2M_eVnm2 = 3.80998;
+        function k_from_E(E) { return Math.sqrt(E / H2_2M_eVnm2); }
+        function computeScattering(E, V0, a) {
+            const k = k_from_E(E);
+            const Einside = E + V0;
+            let k2c = Einside >= 0 ? C(Math.sqrt(Einside / H2_2M_eVnm2), 0) : C(0, Math.sqrt(Math.abs(Einside) / H2_2M_eVnm2));
+            const kc = C(k, 0), i = C(0, 1), one = C(1, 0);
+            function complexExpI_times(kcplx, a_) {
+                const kr = kcplx.re, ki = kcplx.im;
+                const mag = Math.exp(-ki * a_);
+                return C(mag * Math.cos(kr * a_), mag * Math.sin(kr * a_));
+            }
+            const exp_ik2a = complexExpI_times(k2c, a);
+            const exp_minus_ik2a = complexExpI_times(C(-k2c.re, -k2c.im), a);
+            const exp_ika = complexExpI_times(C(k, 0), a);
+
+            const A_mat = [
+                [C(1, 0), cNeg(one), cNeg(one), C(0, 0)],
+                [cMul(cNeg(i), C(k, 0)), cMul(cNeg(i), k2c), cMul(i, k2c), C(0, 0)],
+                [C(0, 0), exp_ik2a, exp_minus_ik2a, cNeg(exp_ika)],
+                [C(0, 0), cMul(i, cMul(k2c, exp_ik2a)), cMul(i, cMul(cNeg(k2c), exp_minus_ik2a)), cMul(cNeg(i), cMul(C(k, 0), exp_ika))]
+            ];
+            const rhs = [cNeg(C(1, 0)), cNeg(cMul(i, C(k, 0))), C(0, 0), C(0, 0)];
+            const sol = solve4x4Complex(A_mat, rhs);
+            if (!sol) return { r: C(0, 0), t: C(0, 0), T: 0 };
+            const [r, A, B, t] = sol;
+            return { r, Acoeff: A, Bcoeff: B, t, T: cAbs2(t), R: cAbs2(r), k, k2c };
+        }
+
+        /* UI + Drawing */
+        const cw = document.getElementById('waveCanvas'), ctxW = cw.getContext('2d');
+        const cp = document.getElementById('plotCanvas'), ctxP = cp.getContext('2d');
+        const V0s = document.getElementById('V0'), As = document.getElementById('a'), Es = document.getElementById('E');
+        const V0v = document.getElementById('V0val'), Av = document.getElementById('Aval'), Ev = document.getElementById('Eval');
+        const runPause = document.getElementById('runPause');
+        let anim = true, phase = 0;
+        runPause.onclick = () => { anim = !anim; runPause.textContent = anim ? 'Pause' : 'Play'; };
+        [V0s, As, Es].forEach(sl => sl.oninput = () => updateDraw());
+        function computeTcurve(V0, a) { const N = 400, Es = [], Ts = []; for (let i = 0; i < N; i++) { const e = 0.01 + 19.99 * i / (N - 1); Es.push(e); Ts.push(computeScattering(e, V0, a).T); } return { Es, Ts }; }
+        let cache = null, last = {};
+        function updateDraw() {
+            const V0 = parseFloat(V0s.value), a = parseFloat(As.value), E = parseFloat(Es.value);
+            V0v.textContent = V0.toFixed(2); Av.textContent = a.toFixed(2); Ev.textContent = E.toFixed(2);
+            if (!cache || last.V0 !== V0 || last.a !== a) { cache = computeTcurve(V0, a); last = { V0, a }; }
+            const sc = computeScattering(E, V0, a);
+            drawWave(sc, E); drawPlot(sc, E);
+        }
+        function drawWave(sc, E) {
+            const W = cw.width, H = cw.height; ctxW.clearRect(0, 0, W, H);
+            const left = 40, right = W - 40; const wellL = W * 0.35, wellR = W * 0.55;
+            ctxW.fillStyle = '#e7f1ff'; ctxW.fillRect(wellL, 8, wellR - wellL, 40);
+            ctxW.fillStyle = '#333'; ctxW.fillText("Potential well", wellL + 10, 28);
+            const amp = 28; function psi(x) {
+                const nm = (x - wellL) / 12;
+                if (x < wellL) { const k = sc.k; return Math.cos(k * nm - phase) + sc.r.re * Math.cos(-k * nm - phase) - sc.r.im * Math.sin(-k * nm - phase); }
+                else if (x <= wellR) {
+                    const kr = sc.k2c.re, ki = sc.k2c.im;
+                    const A = sc.Acoeff, B = sc.Bcoeff;
+                    return (A.re * Math.cos(kr * nm - phase) - A.im * Math.sin(kr * nm - phase)) * Math.exp(-ki * nm)
+                        + (B.re * Math.cos(-kr * nm - phase) - B.im * Math.sin(-kr * nm - phase)) * Math.exp(-ki * nm);
+                }
+                else { const k = sc.k; return sc.t.re * Math.cos(k * nm - phase) - sc.t.im * Math.sin(k * nm - phase); }
+            }
+            ctxW.beginPath(); for (let x = left; x < right; x++) { const y = H / 2 - amp * psi(x); if (x == left) ctxW.moveTo(x, y); else ctxW.lineTo(x, y); } ctxW.strokeStyle = '#007bff'; ctxW.lineWidth = 2; ctxW.stroke();
+            ctxW.fillStyle = '#222'; ctxW.fillText(`E=${E.toFixed(2)} eV   T=${sc.T.toFixed(3)}   R=${sc.R.toFixed(3)}`, 10, H - 10);
+        }
+        function drawPlot(sc, Ecur) {
+            const Es = cache.Es, Ts = cache.Ts; const W = cp.width, H = cp.height;
+            ctxP.clearRect(0, 0, W, H); const m = { l: 40, r: 10, t: 10, b: 30 }; const pw = W - m.l - m.r, ph = H - m.t - m.b;
+            ctxP.strokeStyle = '#ccc'; ctxP.beginPath(); ctxP.moveTo(m.l, m.t); ctxP.lineTo(m.l, m.t + ph); ctxP.lineTo(m.l + pw, m.t + ph); ctxP.stroke();
+            ctxP.beginPath(); for (let i = 0; i < Es.length; i++) { const x = m.l + (Es[i] - 0.01) / 19.99 * pw; const y = m.t + ph - (Ts[i]) * ph; if (i == 0) ctxP.moveTo(x, y); else ctxP.lineTo(x, y); } ctxP.strokeStyle = '#007bff'; ctxP.lineWidth = 2; ctxP.stroke();
+            const Tcur = sc.T; const xcur = m.l + (Ecur - 0.01) / 19.99 * pw; const ycur = m.t + ph - (Tcur) * ph;
+            ctxP.fillStyle = '#ff4d4d'; ctxP.beginPath(); ctxP.arc(xcur, ycur, 4, 0, 2 * Math.PI); ctxP.fill();
+            ctxP.fillStyle = '#222'; ctxP.fillText(`E=${Ecur.toFixed(2)} eV`, xcur + 8, ycur - 6);
+        }
+        function loop() { if (anim) phase += 0.1; updateDraw(); requestAnimationFrame(loop); }
+        updateDraw(); loop();
+    </script>
+
+</body>
+
+</html>

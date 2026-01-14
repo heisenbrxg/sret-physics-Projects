@@ -1,0 +1,829 @@
+physics simulation
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Davisson-Germer Experiment - Interactive Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+            }
+
+            to {
+                filter: drop-shadow(0 0 20px rgba(255, 0, 255, 0.5));
+            }
+        }
+
+        .subtitle {
+            color: #a0a0a0;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .experiment-area {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            min-height: 600px;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: radial-gradient(ellipse at center, rgba(0, 20, 40, 0.9), rgba(0, 0, 0, 0.95));
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        #experimentCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00ffff;
+            font-weight: 500;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .value-display {
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.stop {
+            background: linear-gradient(45deg, #ff4444, #ff6666);
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+        }
+
+        .info-label {
+            color: #a0a0a0;
+        }
+
+        .info-value {
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        .diffraction-pattern {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .pattern-title {
+            font-size: 12px;
+            color: #00ffff;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        #patternCanvas {
+            width: 100%;
+            height: calc(100% - 20px);
+            border-radius: 5px;
+        }
+
+        .electron {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #00ffff, transparent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ffff;
+            pointer-events: none;
+        }
+
+        .crystal-atom {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #ff00ff, #8b008b);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        .wave-indicator {
+            position: absolute;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: wave-expand 1s ease-out;
+        }
+
+        @keyframes wave-expand {
+            from {
+                width: 10px;
+                height: 10px;
+                opacity: 1;
+            }
+
+            to {
+                width: 100px;
+                height: 100px;
+                opacity: 0;
+            }
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .controls-panel {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Davisson-Germer Experiment</h1>
+            <p class="subtitle">Demonstrating the Wave Nature of Electrons</p>
+        </header>
+
+        <main class="main-content">
+            <section class="experiment-area">
+                <div class="canvas-container">
+                    <canvas id="experimentCanvas"></canvas>
+                    <div class="diffraction-pattern">
+                        <div class="pattern-title">Diffraction Pattern</div>
+                        <canvas id="patternCanvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="info-panel">
+                    <div class="info-item">
+                        <span class="info-label">de Broglie Wavelength:</span>
+                        <span class="info-value" id="wavelength">0.167 nm</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Bragg Angle:</span>
+                        <span class="info-value" id="braggAngle">50°</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Crystal Spacing:</span>
+                        <span class="info-value">0.215 nm</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Electrons Fired:</span>
+                        <span class="info-value" id="electronCount">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="controls-panel">
+                <h2 style="margin-bottom: 20px; text-align: center;">Controls</h2>
+
+                <div class="control-group">
+                    <label for="voltage">Accelerating Voltage</label>
+                    <div class="slider-container">
+                        <input type="range" id="voltage" min="20" max="200" value="54">
+                        <span class="value-display" id="voltageValue">54 V</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="angle">Incident Angle</label>
+                    <div class="slider-container">
+                        <input type="range" id="angle" min="10" max="80" value="50">
+                        <span class="value-display" id="angleValue">50°</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="intensity">Beam Intensity</label>
+                    <div class="slider-container">
+                        <input type="range" id="intensity" min="1" max="10" value="5">
+                        <span class="value-display" id="intensityValue">5</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="speed">Animation Speed</label>
+                    <div class="slider-container">
+                        <input type="range" id="speed" min="1" max="10" value="5">
+                        <span class="value-display" id="speedValue">5</span>
+                    </div>
+                </div>
+
+                <button class="btn" id="startBtn">Start Experiment</button>
+                <button class="btn stop" id="stopBtn">Stop Experiment</button>
+                <button class="btn" id="resetBtn">Reset</button>
+
+                <div style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 255, 0.1); border-radius: 10px;">
+                    <h3 style="margin-bottom: 10px; color: #00ffff;">About</h3>
+                    <p style="font-size: 14px; line-height: 1.6; color: #ccc;">
+                        The Davisson-Germer experiment (1927) confirmed de Broglie's hypothesis of matter waves.
+                        Electrons diffract when scattered by a nickel crystal, creating interference patterns that
+                        depend on their wavelength.
+                    </p>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        class DavissonGermerSimulation {
+            constructor() {
+                this.canvas = document.getElementById('experimentCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.patternCanvas = document.getElementById('patternCanvas');
+                this.patternCtx = this.patternCanvas.getContext('2d');
+
+                this.electrons = [];
+                this.isRunning = false;
+                this.electronCount = 0;
+                this.diffractionData = [];
+
+                this.voltage = 54;
+                this.angle = 50;
+                this.intensity = 5;
+                this.speed = 5;
+
+                this.crystalAtoms = [];
+                this.waves = [];
+
+                this.init();
+            }
+
+            init() {
+                this.setupCanvas();
+                this.setupControls();
+                this.generateCrystalLattice();
+                this.animate();
+            }
+
+            setupCanvas() {
+                const resizeCanvas = () => {
+                    const container = this.canvas.parentElement;
+                    this.canvas.width = container.clientWidth;
+                    this.canvas.height = container.clientHeight;
+
+                    this.patternCanvas.width = this.patternCanvas.parentElement.clientWidth - 20;
+                    this.patternCanvas.height = this.patternCanvas.parentElement.clientHeight - 40;
+                };
+
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+            }
+
+            setupControls() {
+                // Voltage control
+                const voltageSlider = document.getElementById('voltage');
+                voltageSlider.addEventListener('input', (e) => {
+                    this.voltage = parseInt(e.target.value);
+                    document.getElementById('voltageValue').textContent = `${this.voltage} V`;
+                    this.updateCalculations();
+                });
+
+                // Angle control
+                const angleSlider = document.getElementById('angle');
+                angleSlider.addEventListener('input', (e) => {
+                    this.angle = parseInt(e.target.value);
+                    document.getElementById('angleValue').textContent = `${this.angle}°`;
+                    this.updateCalculations();
+                });
+
+                // Intensity control
+                const intensitySlider = document.getElementById('intensity');
+                intensitySlider.addEventListener('input', (e) => {
+                    this.intensity = parseInt(e.target.value);
+                    document.getElementById('intensityValue').textContent = this.intensity;
+                });
+
+                // Speed control
+                const speedSlider = document.getElementById('speed');
+                speedSlider.addEventListener('input', (e) => {
+                    this.speed = parseInt(e.target.value);
+                    document.getElementById('speedValue').textContent = this.speed;
+                });
+
+                // Buttons
+                document.getElementById('startBtn').addEventListener('click', () => this.start());
+                document.getElementById('stopBtn').addEventListener('click', () => this.stop());
+                document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+            }
+
+            generateCrystalLattice() {
+                this.crystalAtoms = [];
+                const centerX = this.canvas.width * 0.7;
+                const centerY = this.canvas.height * 0.5;
+                const spacing = 30;
+                const rows = 8;
+                const cols = 6;
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const x = centerX + (j - cols / 2) * spacing;
+                        const y = centerY + (i - rows / 2) * spacing;
+                        this.crystalAtoms.push({ x, y, radius: 10 });
+                    }
+                }
+            }
+
+            updateCalculations() {
+                // Calculate de Broglie wavelength
+                const h = 6.626e-34; // Planck's constant
+                const m = 9.109e-31; // Electron mass
+                const e = 1.602e-19; // Elementary charge
+
+                const wavelength = h / Math.sqrt(2 * m * e * this.voltage) * 1e9; // in nm
+                document.getElementById('wavelength').textContent = `${wavelength.toFixed(3)} nm`;
+
+                // Update Bragg angle display
+                document.getElementById('braggAngle').textContent = `${this.angle}°`;
+            }
+
+            start() {
+                this.isRunning = true;
+            }
+
+            stop() {
+                this.isRunning = false;
+            }
+
+            reset() {
+                this.isRunning = false;
+                this.electrons = [];
+                this.electronCount = 0;
+                this.diffractionData = [];
+                document.getElementById('electronCount').textContent = '0';
+                this.clearPattern();
+            }
+
+            createElectron() {
+                const startX = 50;
+                const startY = this.canvas.height / 2;
+                const targetX = this.canvas.width * 0.7;
+                const targetY = this.canvas.height / 2;
+
+                // Add some randomness to simulate beam spread
+                const spread = 20;
+                const startYVariation = startY + (Math.random() - 0.5) * spread;
+
+                return {
+                    x: startX,
+                    y: startYVariation,
+                    vx: 3 + Math.random() * 2,
+                    vy: (targetY - startYVariation) / 100,
+                    targetX: targetX,
+                    targetY: targetY,
+                    scattered: false,
+                    opacity: 1,
+                    trail: []
+                };
+            }
+
+            updateElectrons() {
+                // Add new electrons based on intensity
+                if (this.isRunning && Math.random() < this.intensity * 0.02) {
+                    this.electrons.push(this.createElectron());
+                    this.electronCount++;
+                    document.getElementById('electronCount').textContent = this.electronCount;
+                }
+
+                // Update existing electrons
+                this.electrons = this.electrons.filter(electron => {
+                    // Store trail
+                    electron.trail.push({ x: electron.x, y: electron.y });
+                    if (electron.trail.length > 20) {
+                        electron.trail.shift();
+                    }
+
+                    // Move electron
+                    electron.x += electron.vx * (this.speed / 5);
+                    electron.y += electron.vy * (this.speed / 5);
+
+                    // Check for crystal collision
+                    if (!electron.scattered) {
+                        for (let atom of this.crystalAtoms) {
+                            const dx = electron.x - atom.x;
+                            const dy = electron.y - atom.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+
+                            if (distance < atom.radius + 5) {
+                                // Scatter electron
+                                electron.scattered = true;
+
+                                // Calculate scattering angle based on Bragg's law
+                                const scatterAngle = this.angle * Math.PI / 180;
+                                const randomOffset = (Math.random() - 0.5) * 0.5;
+
+                                electron.vx = Math.cos(scatterAngle + randomOffset) * 3;
+                                electron.vy = Math.sin(scatterAngle + randomOffset) * 3;
+
+                                // Record diffraction data
+                                this.recordDiffraction(electron.x, electron.y);
+
+                                // Create wave effect
+                                this.createWave(atom.x, atom.y);
+                                break;
+                            }
+                        }
+                    }
+
+                    // Fade out scattered electrons
+                    if (electron.scattered) {
+                        electron.opacity -= 0.02;
+                    }
+
+                    // Remove electrons that are off-screen or faded
+                    return electron.x < this.canvas.width &&
+                        electron.y > 0 &&
+                        electron.y < this.canvas.height &&
+                        electron.opacity > 0;
+                });
+            }
+
+            createWave(x, y) {
+                this.waves.push({
+                    x: x,
+                    y: y,
+                    radius: 0,
+                    maxRadius: 50,
+                    opacity: 0.5
+                });
+            }
+
+            updateWaves() {
+                this.waves = this.waves.filter(wave => {
+                    wave.radius += 2;
+                    wave.opacity -= 0.01;
+                    return wave.radius < wave.maxRadius && wave.opacity > 0;
+                });
+            }
+
+            recordDiffraction(x, y) {
+                // Map position to diffraction pattern
+                const patternX = Math.floor((x / this.canvas.width) * this.patternCanvas.width);
+                const patternY = Math.floor((y / this.canvas.height) * this.patternCanvas.height);
+
+                this.diffractionData.push({ x: patternX, y: patternY, intensity: 1 });
+
+                // Limit data points
+                if (this.diffractionData.length > 1000) {
+                    this.diffractionData.shift();
+                }
+            }
+
+            drawElectronGun() {
+                const gunX = 30;
+                const gunY = this.canvas.height / 2;
+
+                // Draw electron gun
+                this.ctx.fillStyle = '#00ffff';
+                this.ctx.fillRect(gunX - 20, gunY - 15, 40, 30);
+
+                // Draw gun barrel
+                this.ctx.fillRect(gunX + 20, gunY - 5, 30, 10);
+
+                // Draw label
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = '12px Arial';
+                this.ctx.fillText('e⁻ Source', gunX - 10, gunY - 25);
+            }
+
+            drawCrystalLattice() {
+                for (let atom of this.crystalAtoms) {
+                    // Draw atom
+                    const gradient = this.ctx.createRadialGradient(
+                        atom.x, atom.y, 0,
+                        atom.x, atom.y, atom.radius
+                    );
+                    gradient.addColorStop(0, 'rgba(255, 0, 255, 0.8)');
+                    gradient.addColorStop(1, 'rgba(139, 0, 139, 0.3)');
+
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(atom.x, atom.y, atom.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+
+                    // Draw connections
+                    this.ctx.strokeStyle = 'rgba(255, 0, 255, 0.2)';
+                    this.ctx.lineWidth = 1;
+                    for (let other of this.crystalAtoms) {
+                        const dx = atom.x - other.x;
+                        const dy = atom.y - other.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < 35 && distance > 0) {
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(atom.x, atom.y);
+                            this.ctx.lineTo(other.x, other.y);
+                            this.ctx.stroke();
+                        }
+                    }
+                }
+
+                // Draw crystal label
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = '12px Arial';
+                this.ctx.fillText('Ni Crystal', this.canvas.width * 0.65, this.canvas.height * 0.8);
+            }
+
+            drawElectrons() {
+                for (let electron of this.electrons) {
+                    // Draw trail
+                    if (electron.trail.length > 1) {
+                        this.ctx.strokeStyle = `rgba(0, 255, 255, ${electron.opacity * 0.3})`;
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(electron.trail[0].x, electron.trail[0].y);
+                        for (let i = 1; i < electron.trail.length; i++) {
+                            this.ctx.lineTo(electron.trail[i].x, electron.trail[i].y);
+                        }
+                        this.ctx.stroke();
+                    }
+
+                    // Draw electron
+                    const gradient = this.ctx.createRadialGradient(
+                        electron.x, electron.y, 0,
+                        electron.x, electron.y, 8
+                    );
+                    gradient.addColorStop(0, `rgba(0, 255, 255, ${electron.opacity})`);
+                    gradient.addColorStop(1, `rgba(0, 255, 255, 0)`);
+
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(electron.x, electron.y, 8, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+
+            drawWaves() {
+                for (let wave of this.waves) {
+                    this.ctx.strokeStyle = `rgba(0, 255, 255, ${wave.opacity})`;
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+            }
+
+            drawDetector() {
+                const detectorX = this.canvas.width - 50;
+                const detectorY = this.canvas.height / 2;
+                const detectorHeight = 200;
+
+                // Draw detector screen
+                const gradient = this.ctx.createLinearGradient(
+                    detectorX, detectorY - detectorHeight / 2,
+                    detectorX, detectorY + detectorHeight / 2
+                );
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+                gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(detectorX, detectorY - detectorHeight / 2, 20, detectorHeight);
+
+                // Draw label
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = '12px Arial';
+                this.ctx.fillText('Detector', detectorX - 10, detectorY + detectorHeight / 2 + 20);
+            }
+
+            drawPattern() {
+                // Clear pattern canvas
+                this.patternCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                this.patternCtx.fillRect(0, 0, this.patternCanvas.width, this.patternCanvas.height);
+
+                // Draw diffraction pattern
+                for (let point of this.diffractionData) {
+                    const gradient = this.patternCtx.createRadialGradient(
+                        point.x, point.y, 0,
+                        point.x, point.y, 5
+                    );
+                    gradient.addColorStop(0, `rgba(0, 255, 255, ${point.intensity})`);
+                    gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+
+                    this.patternCtx.fillStyle = gradient;
+                    this.patternCtx.beginPath();
+                    this.patternCtx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+                    this.patternCtx.fill();
+
+                    // Fade intensity
+                    point.intensity *= 0.995;
+                }
+
+                // Remove faded points
+                this.diffractionData = this.diffractionData.filter(p => p.intensity > 0.01);
+            }
+
+            clearPattern() {
+                this.patternCtx.fillStyle = '#000';
+                this.patternCtx.fillRect(0, 0, this.patternCanvas.width, this.patternCanvas.height);
+            }
+
+            animate() {
+                // Clear main canvas
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw components
+                this.drawElectronGun();
+                this.drawCrystalLattice();
+                this.drawDetector();
+
+                // Update and draw dynamic elements
+                this.updateElectrons();
+                this.updateWaves();
+                this.drawElectrons();
+                this.drawWaves();
+
+                // Update diffraction pattern
+                this.drawPattern();
+
+                // Continue animation
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Initialize simulation when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            const simulation = new DavissonGermerSimulation();
+            simulation.updateCalculations();
+        });
+    </script>
+</body>
+
+</html>

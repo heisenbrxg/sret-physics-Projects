@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Scattering Simulation - Double Barrier Resonance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .canvas-container {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        canvas {
+            width: 100%;
+            border-radius: 10px;
+            background: #0a0f1e;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .controls-results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .controls,
+        .results {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+            color: #cbd5e1;
+        }
+
+        .control-value {
+            color: #60a5fa;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #1e40af, #3b82f6);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #60a5fa;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #60a5fa;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #64748b, #475569);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #475569, #334155);
+            transform: translateY(-2px);
+        }
+
+        .result-box {
+            background: rgba(30, 41, 59, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .result-title {
+            font-size: 0.9em;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .resonance-indicator {
+            background: rgba(251, 191, 36, 0.2);
+            border: 2px solid #fbbf24;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        .description {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            margin-top: 20px;
+        }
+
+        .description h2 {
+            color: #60a5fa;
+            margin-bottom: 15px;
+        }
+
+        .description p {
+            line-height: 1.8;
+            color: #cbd5e1;
+            margin-bottom: 15px;
+        }
+
+        .description ul {
+            margin-left: 20px;
+            line-height: 1.8;
+            color: #cbd5e1;
+        }
+
+        .description strong {
+            color: #93c5fd;
+        }
+
+        @media (max-width: 1024px) {
+            .controls-results {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>⚛️ Quantum Scattering Simulation</h1>
+            <p class="subtitle">Double Barrier Resonant Tunneling - Reflection & Transmission Coefficients</p>
+        </header>
+
+        <div class="main-content">
+            <div class="canvas-container">
+                <canvas id="mainCanvas" width="1400" height="500"></canvas>
+            </div>
+        </div>
+
+        <div class="controls-results">
+            <div class="controls">
+                <h3 class="section-title">🎛️ Simulation Controls</h3>
+
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Particle Energy (E)</span>
+                        <span class="control-value" id="energyValue">4.0 eV</span>
+                    </div>
+                    <input type="range" id="energy" min="0.5" max="10" step="0.1" value="4">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Barrier Height (V₀)</span>
+                        <span class="control-value" id="barrierHeightValue">6.0 eV</span>
+                    </div>
+                    <input type="range" id="barrierHeight" min="2" max="10" step="0.1" value="6">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Barrier Separation (d)</span>
+                        <span class="control-value" id="separationValue">3.0 nm</span>
+                    </div>
+                    <input type="range" id="separation" min="1" max="6" step="0.1" value="3">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Barrier Width (a)</span>
+                        <span class="control-value" id="widthValue">1.5 nm</span>
+                    </div>
+                    <input type="range" id="width" min="0.5" max="3" step="0.1" value="1.5">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="playBtn">▶️ Play</button>
+                    <button class="btn-secondary" id="resetBtn">🔄 Reset</button>
+                </div>
+            </div>
+
+            <div class="results">
+                <h3 class="section-title">📊 Results</h3>
+
+                <div class="result-box">
+                    <div class="result-title">Reflection Coefficient (R)</div>
+                    <div class="result-value" style="color: #a78bfa;" id="reflectionValue">0.0%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"
+                            style="background: linear-gradient(90deg, #8b5cf6, #a78bfa); width: 0%;" id="reflectionBar">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-title">Transmission Coefficient (T)</div>
+                    <div class="result-value" style="color: #34d399;" id="transmissionValue">0.0%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"
+                            style="background: linear-gradient(90deg, #10b981, #34d399); width: 0%;"
+                            id="transmissionBar"></div>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-title">Conservation Check</div>
+                    <div class="result-value" style="color: #60a5fa; font-size: 1.5em;" id="conservationValue">R + T =
+                        100.0%</div>
+                </div>
+
+                <div id="resonanceIndicator" style="display: none;" class="resonance-indicator">
+                    ⚡ RESONANT TUNNELING DETECTED ⚡
+                </div>
+            </div>
+        </div>
+
+        <div class="description">
+            <h2>About Quantum Scattering & Double Barrier Tunneling</h2>
+
+            <p><strong>Quantum scattering</strong> describes how quantum particles interact with potential barriers.
+                Unlike classical particles that simply bounce off or pass over barriers, quantum particles exhibit
+                wave-like behavior leading to fascinating phenomena.</p>
+
+            <h3 style="color: #60a5fa; margin-top: 20px; margin-bottom: 10px;">Key Concepts:</h3>
+            <ul>
+                <li><strong>Quantum Tunneling:</strong> Particles can penetrate through barriers even when their energy
+                    (E) is less than the barrier height (V₀), defying classical physics predictions.</li>
+                <li><strong>Reflection Coefficient (R):</strong> The probability that an incident particle will be
+                    reflected by the barrier system.</li>
+                <li><strong>Transmission Coefficient (T):</strong> The probability that a particle will tunnel through
+                    and emerge on the other side.</li>
+                <li><strong>Conservation Law:</strong> R + T = 1 (or 100%), ensuring probability is conserved.</li>
+            </ul>
+
+            <h3 style="color: #60a5fa; margin-top: 20px; margin-bottom: 10px;">Double Barrier Resonant Tunneling:</h3>
+            <p>This simulation models a <strong>double barrier system</strong> - two potential barriers separated by a
+                quantum well. This configuration produces remarkable effects:</p>
+            <ul>
+                <li><strong>Resonant Tunneling:</strong> At specific "resonant" energies, transmission probability
+                    approaches 100%, even though E &lt; V₀! This occurs when the particle's wavelength matches the well
+                    width, creating constructive interference.</li>
+                <li><strong>Quantum Well States:</strong> The region between barriers acts as a potential well that can
+                    trap particles temporarily, creating quasi-bound states.</li>
+                <li><strong>Enhanced Transmission:</strong> When particle energy matches a quasi-bound state energy,
+                    transmission dramatically increases - this is resonance.</li>
+            </ul>
+
+            <h3 style="color: #60a5fa; margin-top: 20px; margin-bottom: 10px;">Real-World Applications:</h3>
+            <ul>
+                <li><strong>Resonant Tunneling Diodes (RTDs):</strong> Electronic devices exploiting this effect for
+                    ultra-high-speed switching and oscillators.</li>
+                <li><strong>Quantum Cascade Lasers:</strong> Use multiple quantum wells for generating terahertz
+                    radiation.</li>
+                <li><strong>Single-Electron Transistors:</strong> Manipulate individual electrons using quantum
+                    tunneling effects.</li>
+                <li><strong>Scanning Tunneling Microscopes (STM):</strong> Image surfaces at atomic resolution using
+                    tunneling current.</li>
+            </ul>
+
+            <h3 style="color: #60a5fa; margin-top: 20px; margin-bottom: 10px;">How to Use This Simulation:</h3>
+            <ul>
+                <li>Adjust the <strong>Particle Energy</strong> to see how it affects tunneling probability.</li>
+                <li>Change <strong>Barrier Height</strong> to make tunneling easier or harder.</li>
+                <li>Vary <strong>Barrier Separation</strong> to observe resonant peaks - watch transmission spike at
+                    certain values!</li>
+                <li>Modify <strong>Barrier Width</strong> to see how barrier thickness affects the quantum behavior.
+                </li>
+                <li>Press <strong>Play</strong> to animate the wave propagation and see the quantum interference in
+                    action.</li>
+            </ul>
+
+            <p style="margin-top: 20px;"><strong>Pro tip:</strong> Try setting Energy = 4 eV, Barrier Height = 6 eV, and
+                slowly adjust the Barrier Separation. Watch for sudden jumps in transmission - that's resonant
+                tunneling!</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let isPlaying = false;
+        let time = 0;
+        let animationId = null;
+
+        // Get controls
+        const energySlider = document.getElementById('energy');
+        const barrierHeightSlider = document.getElementById('barrierHeight');
+        const separationSlider = document.getElementById('separation');
+        const widthSlider = document.getElementById('width');
+        const playBtn = document.getElementById('playBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Update displays
+        function updateValues() {
+            document.getElementById('energyValue').textContent = energySlider.value + ' eV';
+            document.getElementById('barrierHeightValue').textContent = barrierHeightSlider.value + ' eV';
+            document.getElementById('separationValue').textContent = separationSlider.value + ' nm';
+            document.getElementById('widthValue').textContent = widthSlider.value + ' nm';
+
+            calculateCoefficients();
+            draw();
+        }
+
+        function calculateCoefficients() {
+            const E = parseFloat(energySlider.value);
+            const V0 = parseFloat(barrierHeightSlider.value);
+            const d = parseFloat(separationSlider.value);
+            const a = parseFloat(widthSlider.value);
+
+            let R, T;
+
+            if (E >= V0) {
+                // Above barrier - still shows quantum reflection
+                const k1 = Math.sqrt(E);
+                const k2 = Math.sqrt(E - V0);
+                const r = Math.pow((k1 - k2) / (k1 + k2), 2);
+                R = r * Math.sin(k2 * (2 * a + d)) * Math.sin(k2 * (2 * a + d));
+                T = 1 - R;
+            } else {
+                // Below barrier - tunneling regime
+                const kappa = Math.sqrt(V0 - E);
+
+                // Double barrier transmission with resonance
+                const phi = kappa * d;
+                const exp_term = Math.exp(-2 * kappa * a);
+
+                // Resonance condition - when phi is near n*pi, transmission increases
+                const resonance_factor = 1 / (1 + Math.pow(Math.sinh(phi), 2));
+
+                T = exp_term * exp_term * resonance_factor /
+                    (1 + 0.25 * Math.pow(V0 / E, 2) * Math.pow(Math.sinh(kappa * a), 4));
+
+                // Enhanced transmission at resonance
+                if (Math.abs(Math.sin(Math.sqrt(E) * d)) > 0.95) {
+                    T = Math.min(T * 3, 1);
+                }
+
+                R = 1 - T;
+            }
+
+            R = Math.max(0, Math.min(1, R));
+            T = Math.max(0, Math.min(1, T));
+
+            // Check for resonance
+            const isResonant = T > 0.7 && E < V0;
+            document.getElementById('resonanceIndicator').style.display = isResonant ? 'block' : 'none';
+
+            // Update displays
+            document.getElementById('reflectionValue').textContent = (R * 100).toFixed(1) + '%';
+            document.getElementById('transmissionValue').textContent = (T * 100).toFixed(1) + '%';
+            document.getElementById('conservationValue').textContent = `R + T = ${((R + T) * 100).toFixed(1)}%`;
+
+            document.getElementById('reflectionBar').style.width = (R * 100) + '%';
+            document.getElementById('transmissionBar').style.width = (T * 100) + '%';
+
+            return { R, T };
+        }
+
+        function draw() {
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Clear with gradient
+            const grad = ctx.createLinearGradient(0, 0, 0, height);
+            grad.addColorStop(0, '#0a0f1e');
+            grad.addColorStop(1, '#1a1f35');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw grid
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < height; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(width, i);
+                ctx.stroke();
+            }
+
+            // Parameters
+            const E = parseFloat(energySlider.value);
+            const V0 = parseFloat(barrierHeightSlider.value);
+            const d = parseFloat(separationSlider.value);
+            const a = parseFloat(widthSlider.value);
+            const { R, T } = calculateCoefficients();
+
+            // Barrier positions
+            const barrier1X = width * 0.4;
+            const barrier2X = barrier1X + (a * 40) + (d * 40);
+            const barrierPixelWidth = a * 40;
+            const barrierPixelHeight = (V0 / 10) * height * 0.6;
+
+            // Draw barriers with glow
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#ef4444';
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+            ctx.fillRect(barrier1X, height / 2 - barrierPixelHeight / 2, barrierPixelWidth, barrierPixelHeight);
+            ctx.fillRect(barrier2X, height / 2 - barrierPixelHeight / 2, barrierPixelWidth, barrierPixelHeight);
+
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(barrier1X, height / 2 - barrierPixelHeight / 2, barrierPixelWidth, barrierPixelHeight);
+            ctx.strokeRect(barrier2X, height / 2 - barrierPixelHeight / 2, barrierPixelWidth, barrierPixelHeight);
+
+            // Draw quantum well region
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.1)';
+            ctx.fillRect(barrier1X + barrierPixelWidth, height / 2 - barrierPixelHeight / 2,
+                barrier2X - (barrier1X + barrierPixelWidth), barrierPixelHeight);
+
+            // Wave parameters
+            const k = Math.sqrt(E) * 0.4;
+            const omega = k * 0.3;
+
+            // Incident wave (blue)
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#3b82f6';
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let x = 0; x < barrier1X; x += 1) {
+                const arg = k * (x / 40) - omega * time;
+                const amplitude = 40;
+                const y = height / 2 + amplitude * Math.sin(arg);
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Reflected wave (purple)
+            ctx.shadowColor = '#a78bfa';
+            ctx.strokeStyle = '#a78bfa';
+            ctx.globalAlpha = R;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let x = 0; x < barrier1X; x += 1) {
+                const arg = -k * (x / 40) - omega * time;
+                const amplitude = 40 * R;
+                const y = height / 2 + amplitude * Math.sin(arg);
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+
+            // Wave in quantum well (yellow - shows interference)
+            if (T > 0.1) {
+                ctx.shadowColor = '#fbbf24';
+                ctx.strokeStyle = '#fbbf24';
+                ctx.globalAlpha = 0.8;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                for (let x = barrier1X + barrierPixelWidth; x < barrier2X; x += 1) {
+                    const arg1 = k * ((x - barrier1X) / 40) - omega * time;
+                    const arg2 = -k * ((x - barrier1X) / 40) - omega * time;
+                    const amplitude = 35;
+                    const y = height / 2 + amplitude * (Math.sin(arg1) + 0.5 * Math.sin(arg2));
+                    if (x === barrier1X + barrierPixelWidth) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+
+            // Transmitted wave (green)
+            ctx.shadowColor = '#34d399';
+            ctx.strokeStyle = '#34d399';
+            ctx.globalAlpha = T;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let x = barrier2X + barrierPixelWidth; x < width; x += 1) {
+                const arg = k * ((x - barrier2X - barrierPixelWidth) / 40) - omega * time;
+                const amplitude = 40 * T;
+                const y = height / 2 + amplitude * Math.sin(arg);
+                if (x === barrier2X + barrierPixelWidth) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+
+            // Energy level line
+            const energyY = height / 2 - (E / 10) * height * 0.6 / 2;
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, energyY);
+            ctx.lineTo(width, energyY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Labels
+            ctx.font = 'bold 16px monospace';
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillText('Incident Wave', 30, 40);
+            ctx.fillStyle = '#a78bfa';
+            ctx.fillText('Reflected', 30, 65);
+            ctx.fillStyle = '#34d399';
+            ctx.fillText('Transmitted', width - 140, 40);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillText(`Energy: ${E.toFixed(1)} eV`, 30, energyY - 15);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText('Barrier 1', barrier1X + 10, height / 2 - barrierPixelHeight / 2 - 15);
+            ctx.fillText('Barrier 2', barrier2X + 10, height / 2 - barrierPixelHeight / 2 - 15);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillText('Quantum Well', barrier1X + barrierPixelWidth + 20, height / 2 + 15);
+        }
+
+        function animate() {
+            if (isPlaying) {
+                time += 0.05;
+                draw();
+                animationId = requestAnimationFrame(animate);
+            }
+        }
+
+        playBtn.onclick = () => {
+            isPlaying = !isPlaying;
+            playBtn.innerHTML = isPlaying ? '⏸️ Pause' : '▶️ Play';
+            if (isPlaying) animate();
+        };
+
+        resetBtn.onclick = () => {
+            time = 0;
+            isPlaying = false;
+            playBtn.innerHTML = '▶️ Play';
+            draw();
+        };
+
+        energySlider.oninput = updateValues;
+        barrierHeightSlider.oninput = updateValues;
+        separationSlider.oninput = updateValues;
+        widthSlider.oninput = updateValues;
+
+        // Initial draw
+        updateValues();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+     
+    <meta charset="UTF-8">
+      <title>Bloch Sphere Simulation</title>
+      <style>
+        body {
+            margin: 0;
+            background: radial-gradient(circle at center, #f00d9d, #49fb0e);
+            color: rgb(14, 210, 231);
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Left panel for controls */
+        #controls {
+            width: 220px;
+            background: rgba(2, 247, 19, 0.7);
+            padding: 20px;
+            border-right: 2px solid #0bff38;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        button {
+            margin: 8px 0;
+            width: 140px;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: #0040ff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #0066ff;
+            transform: scale(1.05);
+        }
+
+        input[type="range"] {
+            width: 140px;
+        }
+
+        #scene-container {
+            flex-grow: 1;
+        }
+
+        #state {
+            margin-top: 12px;
+            text-align: center;
+            font-family: "Courier New", monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+      <div id="controls">
+            <h3>Quantum Gates</h3>
+            <button onclick="applyGate('X')">X Gate</button>
+            <button onclick="applyGate('Y')">Y Gate</button>
+            <button onclick="applyGate('Z')">Z Gate</button>
+            <button onclick="applyGate('H')">Hadamard</button>
+
+            <br>
+            θ (Theta):
+            <input type="range" id="theta" min="0" max="180" value="45" step="1">
+            <span id="thetaVal">45°</span><br><br>
+            ϕ (Phi):
+            <input type="range" id="phi" min="0" max="360" value="60" step="1">
+            <span id="phiVal">60°</span>
+
+            <div id="state"></div>
+          </div>
+
+      <div id="scene-container"></div>
+
+     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+     
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+     
+    <script>
+        // === Scene setup ===
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth - 220, window.innerHeight);
+        document.getElementById("scene-container").appendChild(renderer.domElement);
+        camera.position.set(2.5, 2.5, 2.5);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // === Bloch Sphere ===
+        const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
+        const sphereMaterial = new THREE.MeshBasicMaterial({
+            color: 0x0077ff,
+            wireframe: true
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+
+        // === Axes ===
+        const axisLen = 1.4;
+        const xAxis = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), axisLen, 0xff0000);
+        const yAxis = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), axisLen, 0x00ff00);
+        const zAxis = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), axisLen, 0xFFA500);
+
+        scene.add(xAxis, yAxis, zAxis);
+
+        // === Labels ===
+        function addLabel(text, position) {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            ctx.font = "60px Arial";
+            ctx.fillStyle = "white";
+            ctx.fillText(text, 0, 60);
+            const texture = new THREE.CanvasTexture(canvas);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture }));
+            sprite.position.copy(position);
+            sprite.scale.set(0.4, 0.2, 1);
+            scene.add(sprite);
+        }
+        addLabel("|0⟩", new THREE.Vector3(0, 0, 1.2));
+        addLabel("|1⟩", new THREE.Vector3(0, 0, -1.2));
+        addLabel("+X", new THREE.Vector3(1.2, 0, 0));
+        addLabel("-X", new THREE.Vector3(-1.2, 0, 0));
+        addLabel("+Y", new THREE.Vector3(0, 1.2, 0));
+        addLabel("-Y", new THREE.Vector3(0, -1.2, 0));
+
+        // === Lighting ===
+        const light = new THREE.PointLight(0xffffff, 1);
+        light.position.set(5, 5, 5);
+        scene.add(light);
+
+        // === |ψ⟩ arrow ===
+        const arrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 1.2, 0xffff00);
+        scene.add(arrow);
+
+        // === Quantum State ===
+        let theta = Math.PI / 4;
+        let phi = Math.PI / 3;
+
+        function updateArrow() {
+            const x = Math.sin(theta) * Math.cos(phi);
+            const y = Math.sin(theta) * Math.sin(phi);
+            const z = Math.cos(theta);
+            arrow.setDirection(new THREE.Vector3(x, y, z));
+            const cos = Math.cos(theta / 2);
+            const sin = Math.sin(theta / 2);
+            const real = (Math.cos(phi) * sin).toFixed(3);
+            const imag = (Math.sin(phi) * sin).toFixed(3);
+            document.getElementById("thetaVal").textContent = (theta * 180 / Math.PI).toFixed(1) + "°";
+            document.getElementById("phiVal").textContent = (phi * 180 / Math.PI).toFixed(1) + "°";
+            document.getElementById("state").innerHTML =
+                `<b>|ψ⟩</b> = [ ${cos.toFixed(3)} , (${real} + i${imag}) ]ᵀ`;
+        }
+
+        document.getElementById("theta").addEventListener("input", e => {
+            theta = e.target.value * Math.PI / 180;
+            updateArrow();
+        });
+        document.getElementById("phi").addEventListener("input", e => {
+            phi = e.target.value * Math.PI / 180;
+            updateArrow();
+        });
+
+        // === Quantum Gates ===
+        function applyGate(gate) {
+            const a = Math.cos(theta / 2);
+            const b_re = Math.cos(phi) * Math.sin(theta / 2);
+            const b_im = Math.sin(phi) * Math.sin(theta / 2);
+            let a_re = a, a_im = 0;
+            let new_a_re, new_a_im, new_b_re, new_b_im;
+
+            if (gate === 'X') {
+                new_a_re = b_re; new_a_im = b_im;
+                new_b_re = a_re; new_b_im = a_im;
+            } else if (gate === 'Y') {
+                new_a_re = b_im; new_a_im = -b_re;
+                new_b_re = -a_im; new_b_im = a_re;
+            } else if (gate === 'Z') {
+                new_a_re = a_re; new_a_im = a_im;
+                new_b_re = -b_re; new_b_im = -b_im;
+            } else if (gate === 'H') {
+                const f = 1 / Math.sqrt(2);
+                new_a_re = f * (a_re + b_re);
+                new_a_im = f * (a_im + b_im);
+                new_b_re = f * (a_re - b_re);
+                new_b_im = f * (a_im - b_im);
+            }
+
+            const norm = Math.sqrt(new_a_re ** 2 + new_a_im ** 2 + new_b_re ** 2 + new_b_im ** 2);
+            new_a_re /= norm; new_a_im /= norm; new_b_re /= norm; new_b_im /= norm;
+
+            const newTheta = 2 * Math.acos(new_a_re);
+            const newPhi = Math.atan2(new_b_im, new_b_re);
+
+            const startTheta = theta, startPhi = phi;
+            let t = 0;
+            function animateGate() {
+                t += 0.05;
+                const s = 0.5 - 0.5 * Math.cos(Math.min(t, 1) * Math.PI);
+                theta = startTheta + (newTheta - startTheta) * s;
+                phi = startPhi + (newPhi - startPhi) * s;
+                updateArrow();
+                if (t < 1) requestAnimationFrame(animateGate);
+            }
+            requestAnimationFrame(animateGate);
+        }
+
+        updateArrow();
+
+        // === Animation Loop ===
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 220) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 220, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>
